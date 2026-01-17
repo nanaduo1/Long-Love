@@ -3,7 +3,7 @@
     "date": "2026-01-10",
     "taken_am": true,
     "time_am": "08:15",
-    "taken_pm": true,
+    "taken_pm": false,
     "time_pm": "20:30",
     "water_count": 8
   },
@@ -43,7 +43,7 @@
     "date": "2026-01-15",
     "taken_am": true,
     "time_am": "08:30",
-    "taken_pm": false,
+    "taken_pm": true,
     "time_pm": "20:20",
     "water_count": 6
   },
@@ -51,16 +51,8 @@
     "date": "2026-01-16",
     "taken_am": true,
     "time_am": "08:00",
-    "taken_pm": false,
+    "taken_pm": true,
     "time_pm": "20:20",
     "water_count": 3
-  },
-  {
-    "date": "2026-01-17",
-    "taken_am": true,
-    "time_am": "14:17",
-    "taken_pm": true,
-    "time_pm": "14:17",
-    "water_count": 0
   }
 ]
