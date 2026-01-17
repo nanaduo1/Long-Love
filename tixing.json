@@ -1,7 +1,8 @@
 {
   "drug_name": "尼洛替尼",
-  "total_pills": 44,
+  "total_pills": 30,
   "single_dose": 2,
   "next_visit_date": "2026-01-30",
-  "water_target": 8
+  "water_target": 8,
+  "stock_last_save": "2026-01-17T06:18:19.932Z"
 }
