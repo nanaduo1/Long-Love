@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>老婆万岁</title>
+    <title>CML 康复助手</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
@@ -125,9 +125,7 @@
         <div class="text-amber-500 text-lg">💡</div>
         <div class="text-xs text-gray-600 leading-relaxed">
             <span class="font-bold text-gray-800">医嘱：</span>
-            <p>每次服药需空腹（餐后2小时，服药后1小时禁食）。</p>
-            <p>每次服药需空腹（餐后2小时，服药后1小时禁食）。</p>
-            <p>每次服药需空腹（餐后2小时，服药后1小时禁食）。</p>
+            每次服药需空腹（餐后2小时，服药后1小时禁食）。
         </div>
     </div>
 
@@ -174,7 +172,7 @@
                 </div>
             </div>
 
-            <button onclick="saveEntryData()" class="w-full mt-6 bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30">保存</button>
+            <button onclick="saveEntryData()" id="btnSave" class="w-full mt-6 bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30">保存</button>
         </div>
     </div>
 
@@ -197,17 +195,16 @@
                 <h2 class="text-xl font-bold">服药历史</h2>
                 <button onclick="document.getElementById('historyModal').classList.add('hidden')" class="bg-gray-100 p-2 rounded-full text-sm font-bold text-gray-600">关闭</button>
             </div>
-            <div id="historyList" class="space-y-2"></div>
+            <div id="historyList" class="space-y-2 pb-20"></div>
         </div>
     </div>
 
     <div id="errorBox" class="hidden fixed top-20 left-4 right-4 bg-red-500 text-white p-3 rounded-xl shadow-xl z-[60] text-sm font-bold text-center transition-all"></div>
 
     <script>
-        const CACHE_KEY = 'cml_config_v7';
+        const CACHE_KEY = 'cml_config_v9';
         let config = JSON.parse(localStorage.getItem(CACHE_KEY));
         let appData = { tixing: null, chiyao: [], tijian: [] };
-        let shas = {};
 
         // --- Clock & Status Helper ---
         function startClock() {
@@ -221,30 +218,21 @@
 
         function setGhStatus(status) {
             const dot = document.getElementById('ghStatusDot');
-            // Remove old classes
             dot.className = "w-2 h-2 rounded-full transition-colors duration-500";
-            
-            if (status === 'success') {
-                dot.classList.add('bg-green-500', 'shadow-[0_0_8px_rgba(34,197,94,0.6)]');
-            } else if (status === 'error') {
-                dot.classList.add('bg-red-500');
-            } else {
-                dot.classList.add('bg-orange-400', 'animate-pulse');
-            }
+            if (status === 'success') dot.classList.add('bg-green-500', 'shadow-[0_0_8px_rgba(34,197,94,0.6)]');
+            else if (status === 'error') dot.classList.add('bg-red-500');
+            else dot.classList.add('bg-orange-400', 'animate-pulse');
         }
 
         async function init() {
             startClock();
             setGhStatus('loading');
             if (!config) { openSettings(); return; }
-            
             setLoading(true);
             try {
-                await Promise.all([
-                    loadFile('tixing.json', 'tixing'),
-                    loadFile('chiyao.json', 'chiyao'),
-                    loadFile('tijian.json', 'tijian')
-                ]);
+                await loadFile('tixing.json', 'tixing');
+                await loadFile('chiyao.json', 'chiyao');
+                await loadFile('tijian.json', 'tijian');
                 renderUI();
                 setGhStatus('success');
             } catch (err) {
@@ -255,25 +243,30 @@
         }
 
         async function loadFile(filename, key) {
-            const res = await fetch(`https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`, {
-                headers: { 'Authorization': `token ${config.token}`, 'Accept': 'application/vnd.github.v3+json' }, cache: "no-store"
-            });
+            const url = `https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`;
+            const res = await fetch(url, { headers: { 'Authorization': `token ${config.token}`, 'Accept': 'application/vnd.github.v3+json' }, cache: "no-store" });
             if (!res.ok) throw new Error(filename + " " + res.status);
             const json = await res.json();
-            shas[filename] = json.sha;
             appData[key] = JSON.parse(decodeURIComponent(escape(window.atob(json.content))));
         }
 
+        // Save with auto-fetch SHA
         async function saveFile(filename, contentObj) {
+            const url = `https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`;
+            // 1. Get latest SHA
+            const getRes = await fetch(url, { headers: { 'Authorization': `token ${config.token}` }, cache: "no-store" });
+            if(!getRes.ok) throw new Error(`无法获取 ${filename} 最新版本`);
+            const getJson = await getRes.json();
+            const latestSha = getJson.sha;
+
+            // 2. Put
             const contentBase64 = window.btoa(unescape(encodeURIComponent(JSON.stringify(contentObj, null, 2))));
-            const res = await fetch(`https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`, {
+            const res = await fetch(url, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${config.token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: `Update ${filename}`, content: contentBase64, sha: shas[filename] })
+                body: JSON.stringify({ message: `Update ${filename}`, content: contentBase64, sha: latestSha })
             });
             if (!res.ok) throw new Error("保存失败");
-            const json = await res.json();
-            shas[filename] = json.content.sha;
         }
 
         async function checkIn(type) {
@@ -281,29 +274,22 @@
             try {
                 const today = dayjs().format('YYYY-MM-DD');
                 if (!Array.isArray(appData.chiyao)) appData.chiyao = [];
-                
                 let log = appData.chiyao.find(l => l.date === today);
                 if (!log) {
                     log = { date: today, taken_am: false, time_am: "", taken_pm: false, time_pm: "", water_count: 0 };
                     appData.chiyao.push(log);
                 }
 
-                if ((type === 'am' && log.taken_am) || (type === 'pm' && log.taken_pm)) {
-                    setLoading(false); return; 
-                }
+                if ((type === 'am' && log.taken_am) || (type === 'pm' && log.taken_pm)) { setLoading(false); return; }
 
                 if (type === 'am') { log.taken_am = true; log.time_am = dayjs().format('HH:mm'); }
                 if (type === 'pm') { log.taken_pm = true; log.time_pm = dayjs().format('HH:mm'); }
 
-                // Stock deduction logic
                 const dose = appData.tixing.single_dose || 2; 
                 appData.tixing.total_pills = Math.max(0, appData.tixing.total_pills - dose);
 
-                await Promise.all([
-                    saveFile('chiyao.json', appData.chiyao),
-                    saveFile('tixing.json', appData.tixing)
-                ]);
-                renderUI();
+                await Promise.all([saveFile('chiyao.json', appData.chiyao), saveFile('tixing.json', appData.tixing)]);
+                renderUI(); setGhStatus('success');
             } catch (e) { showError(e.message); setGhStatus('error'); }
             setLoading(false);
         }
@@ -336,7 +322,7 @@
             if(log.taken_am && log.taken_pm) card.className = "card shadow-apple bg-gradient-to-br from-emerald-500 to-green-500 text-white relative overflow-hidden transition-all duration-500";
             else card.className = "card shadow-apple bg-gradient-to-br from-blue-500 to-indigo-600 text-white relative overflow-hidden transition-all duration-500";
 
-            // Stock & Water
+            // Stock
             document.getElementById('waterCount').innerText = log.water_count || 0;
             const stock = appData.tixing.total_pills;
             const maxStock = 240; 
@@ -359,9 +345,7 @@
                 const d = dayjs().subtract(i, 'day');
                 const log = appData.chiyao.find(l=>l.date===d.format('YYYY-MM-DD'));
                 const isToday = i===0;
-                
                 const dot = (taken) => `w-2 h-2 rounded-full ${taken ? 'bg-green-500' : (isToday ? 'bg-gray-200 border border-gray-300' : 'bg-red-400 opacity-30')}`;
-                
                 const div = document.createElement('div');
                 div.className = 'flex flex-col items-center gap-1';
                 div.innerHTML = `<span class="text-[10px] text-gray-400 font-bold">${d.format('DD')}</span><div class="${dot(log?.taken_am)}"></div><div class="${dot(log?.taken_pm)}"></div>`;
@@ -373,15 +357,21 @@
             const data = [...appData.tijian].sort((a,b)=>dayjs(a.date).diff(dayjs(b.date)));
             const labels = data.map(d=>dayjs(d.date).format('MM/DD'));
 
-            // BCR
+            // Chart BCR (Log fix)
+            const bcrData = data.map(d => {
+                let val = parseFloat(d.bcr_abl);
+                if(isNaN(val)) return null;
+                return val <= 0 ? 0.0001 : val; 
+            });
+
             const ctxBcr = document.getElementById('chartBcr').getContext('2d');
             new Chart(ctxBcr, {
                 type: 'line',
-                data: { labels, datasets: [{ label: 'BCR-ABL', data: data.map(d=>d.bcr_abl), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill:true, tension:0.3 }] },
+                data: { labels, datasets: [{ label: 'BCR-ABL', data: bcrData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill:true, tension:0.3 }] },
                 options: { responsive:true, maintainAspectRatio:false, scales:{ y:{type:'logarithmic', grid:{borderDash:[4,4]}}, x:{grid:{display:false}} }, plugins:{legend:{display:false}} }
             });
 
-            // Blood
+            // Chart Blood
             const ctxBlood = document.getElementById('chartBlood').getContext('2d');
             new Chart(ctxBlood, {
                 type: 'line',
@@ -397,13 +387,26 @@
             });
         }
 
+        // Updated History Modal to show exact time
         function showHistoryModal() {
             const list = document.getElementById('historyList');
             list.innerHTML = '';
             appData.chiyao.slice().reverse().slice(0,60).forEach(l => {
                 const row = document.createElement('div');
-                row.className = "flex justify-between p-3 bg-gray-50 rounded-lg border border-gray-100";
-                row.innerHTML = `<span class="text-sm font-bold">${dayjs(l.date).format('MM/DD')}</span><div class="text-xs flex gap-3"><span class="${l.taken_am?'text-green-600':'text-red-400'}">早 ${l.taken_am?'✔':'✕'}</span><span class="${l.taken_pm?'text-green-600':'text-red-400'}">晚 ${l.taken_pm?'✔':'✕'}</span></div>`;
+                row.className = "flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100 mb-2";
+                
+                const amTime = l.taken_am ? l.time_am : '未服';
+                const pmTime = l.taken_pm ? l.time_pm : '未服';
+                const amStyle = l.taken_am ? 'text-green-600 bg-green-50' : 'text-red-400 bg-red-50 opacity-60';
+                const pmStyle = l.taken_pm ? 'text-indigo-600 bg-indigo-50' : 'text-red-400 bg-red-50 opacity-60';
+
+                row.innerHTML = `
+                    <div class="font-bold text-gray-700 text-sm w-16">${dayjs(l.date).format('MM/DD')}</div>
+                    <div class="flex gap-2 flex-1 justify-end">
+                        <span class="text-xs px-2 py-1 rounded-md font-bold ${amStyle}">☀️ ${amTime}</span>
+                        <span class="text-xs px-2 py-1 rounded-md font-bold ${pmStyle}">🌙 ${pmTime}</span>
+                    </div>
+                `;
                 list.appendChild(row);
             });
             document.getElementById('historyModal').classList.remove('hidden');
@@ -416,8 +419,10 @@
             document.getElementById('inNextVisit').value = appData.tixing.next_visit_date;
         }
         function closeEntryModal() { document.getElementById('entryModal').classList.add('hidden'); }
+        
         async function saveEntryData() {
-            setLoading(true);
+            const btn = document.getElementById('btnSave');
+            btn.innerText = "正在提交..."; btn.disabled = true;
             try {
                 const date = document.getElementById('inDate').value;
                 const wbc = document.getElementById('inWbc').value;
@@ -429,9 +434,9 @@
                 appData.tixing.next_visit_date = document.getElementById('inNextVisit').value;
 
                 await Promise.all([saveFile('tijian.json', appData.tijian), saveFile('tixing.json', appData.tixing)]);
-                closeEntryModal(); renderUI();
-            } catch(e) { showError(e.message); }
-            setLoading(false);
+                closeEntryModal(); renderUI(); setGhStatus('success');
+            } catch(e) { showError(e.message); setGhStatus('error'); }
+            btn.innerText = "保存"; btn.disabled = false;
         }
 
         function openSettings() { document.getElementById('settingsModal').classList.remove('hidden'); }
