@@ -125,7 +125,15 @@
     <div class="card shadow-apple p-4 mb-3">
         <div class="flex justify-between items-center mb-2">
             <div>
-                <h3 class="text-sm font-bold text-gray-800">BCR-ABL % (近1年)</h3>
+                <div class="flex items-center gap-1">
+                    <h3 class="text-sm font-bold text-gray-800">BCR-ABL % (近1年)</h3>
+                    <!-- 信息图标按钮 -->
+                    <button onclick="document.getElementById('infoModal').classList.remove('hidden')" class="text-gray-400 hover:text-blue-500 active:scale-95 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
                 <span class="text-[10px] text-gray-400">融合基因指数</span>
             </div>
             <button onclick="showLabHistory('bcr')" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md">详细</button>
@@ -161,6 +169,57 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
         <span>录入化验单 / 校准库存</span>
     </button>
+
+    <!-- 信息弹窗 -->
+    <div id="infoModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-slide-up">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800">参考标准</h3>
+                <button onclick="document.getElementById('infoModal').classList.add('hidden')" class="bg-gray-100 rounded-full p-1 w-8 h-8 text-gray-500 font-bold hover:bg-gray-200 transition">✕</button>
+            </div>
+            
+            <h4 class="text-sm font-bold text-blue-600 mb-2 mt-1">分子反应各阶段</h4>
+            <div class="overflow-hidden rounded-lg border border-gray-100 text-xs mb-5">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 text-gray-500 uppercase tracking-wider">
+                        <tr>
+                            <th class="px-3 py-2 font-medium">阶段</th>
+                            <th class="px-3 py-2 font-medium">名称</th>
+                            <th class="px-3 py-2 font-medium text-right whitespace-nowrap">BCR-ABL</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-gray-700 font-medium">
+                        <tr><td class="px-3 py-2">初诊</td><td class="px-3 py-2 text-gray-500">活跃期</td><td class="px-3 py-2 text-right">≥10%</td></tr>
+                        <tr class="bg-gray-50/30"><td class="px-3 py-2">EMR</td><td class="px-3 py-2 text-gray-500">早期反应</td><td class="px-3 py-2 text-right">≤10%</td></tr>
+                        <tr><td class="px-3 py-2 text-blue-600">MMR</td><td class="px-3 py-2 text-gray-500">主要反应</td><td class="px-3 py-2 text-right text-blue-600">≤0.1%</td></tr>
+                        <tr class="bg-gray-50/30"><td class="px-3 py-2">MR4</td><td class="px-3 py-2 text-gray-500">深度缓解</td><td class="px-3 py-2 text-right">≤0.01%</td></tr>
+                        <tr><td class="px-3 py-2">MR4.5</td><td class="px-3 py-2 text-gray-500">极深缓解</td><td class="px-3 py-2 text-right">≤0.0032%</td></tr>
+                        <tr class="bg-green-50 text-green-700"><td class="px-3 py-2">CMR</td><td class="px-3 py-2">完全缓解</td><td class="px-3 py-2 text-right">未检出</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 class="text-sm font-bold text-blue-600 mb-2">重要时间节点</h4>
+            <ul class="text-xs text-gray-600 space-y-2 ml-1 font-medium">
+                <li class="flex justify-between items-center border-b border-gray-50 pb-1">
+                    <span class="text-gray-500">3 个月</span>
+                    <span class="font-bold text-gray-800">≤10%</span>
+                </li>
+                <li class="flex justify-between items-center border-b border-gray-50 pb-1">
+                    <span class="text-gray-500">6–12 个月</span>
+                    <span class="font-bold text-gray-800">≤0.1%</span>
+                </li>
+                <li class="flex justify-between items-center border-b border-gray-50 pb-1">
+                    <span class="text-gray-500">1–2 年</span>
+                    <span class="font-bold text-gray-800">≤0.01%</span>
+                </li>
+                <li class="flex justify-between items-center pt-1">
+                    <span class="text-gray-500">≥2 年稳定</span>
+                    <span class="font-bold text-green-600">未检出</span>
+                </li>
+            </ul>
+        </div>
+    </div>
 
     <div id="entryModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center transition-opacity">
         <div class="bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
