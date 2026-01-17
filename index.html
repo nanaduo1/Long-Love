@@ -26,6 +26,18 @@
         /* 弹窗动画 */
         .animate-slide-up { animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        /* 强制移除 iOS 日期输入框默认样式 */
+        input[type="date"] {
+            -webkit-appearance: none;
+            appearance: none;
+            min-height: 44px; /* 统一高度 */
+        }
+        input[type="number"] {
+            -webkit-appearance: none;
+            appearance: none;
+            min-height: 44px;
+        }
     </style>
     <script>dayjs.locale('zh-cn');</script>
 </head>
@@ -160,35 +172,35 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1">日期</label>
-                    <input type="date" id="inDate" class="w-full bg-gray-100 rounded-xl p-3 text-sm font-bold outline-none">
+                    <input type="date" id="inDate" class="w-full appearance-none m-0 bg-gray-100 rounded-xl p-3 text-sm font-bold outline-none text-gray-900 border-none">
                 </div>
-                <!-- 化验数据录入区域 -->
+                
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">白细胞 (WBC)</label>
-                        <input type="number" id="inWbc" placeholder="选填" class="w-full bg-gray-100 rounded-xl p-3 text-sm font-bold outline-none">
+                        <input type="number" id="inWbc" placeholder="选填" class="w-full appearance-none m-0 bg-gray-100 rounded-xl p-3 text-sm font-bold outline-none text-gray-900">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">血小板 (PLT)</label>
-                        <input type="number" id="inPlt" placeholder="选填" class="w-full bg-gray-100 rounded-xl p-3 text-sm font-bold outline-none">
+                        <input type="number" id="inPlt" placeholder="选填" class="w-full appearance-none m-0 bg-gray-100 rounded-xl p-3 text-sm font-bold outline-none text-gray-900">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1">BCR-ABL %</label>
-                    <input type="number" id="inBcr" placeholder="选填" class="w-full bg-gray-100 rounded-xl p-3 text-sm font-bold outline-none">
+                    <input type="number" id="inBcr" placeholder="选填" class="w-full appearance-none m-0 bg-gray-100 rounded-xl p-3 text-sm font-bold outline-none text-gray-900">
                 </div>
                 
                 <div class="border-t border-gray-100 my-2 pt-2">
                     <p class="text-xs text-blue-500 font-bold mb-3">配置更新</p>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">当前实际库存 (粒)</label>
-                            <input type="number" id="inStock" class="w-full bg-blue-50 text-blue-800 rounded-xl p-3 text-sm font-bold outline-none">
+                            <input type="number" id="inStock" class="w-full appearance-none m-0 bg-blue-50 text-blue-800 rounded-xl p-3 text-sm font-bold outline-none">
                             <p class="text-[10px] text-gray-400 mt-1">保存将重置自动扣减时间</p>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">下次复查</label>
-                            <input type="date" id="inNextVisit" class="w-full bg-blue-50 text-blue-800 rounded-xl p-3 text-sm font-bold outline-none">
+                            <input type="date" id="inNextVisit" class="w-full appearance-none m-0 bg-blue-50 text-blue-800 rounded-xl p-3 text-sm font-bold outline-none border-none">
                         </div>
                     </div>
                 </div>
