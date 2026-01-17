@@ -3,569 +3,480 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Lia 爱心提醒</title>
+    <title>老婆万岁</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/zh-cn.js"></script>
     <style>
-        /* Apple 全局风格设定 */
-        :root { --apple-gray: #F2F2F7; }
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif; 
-            background-color: var(--apple-gray); 
-            color: #1c1c1e;
-            padding-bottom: 40px;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", Helvetica, Arial, sans-serif; 
+            background-color: #F2F2F7; color: #1c1c1e; padding-bottom: 90px;
+            -webkit-tap-highlight-color: transparent;
         }
-        /* 定制柔和阴影 */
-        .card-shadow { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04); }
-        /* 卡片基础样式 */
-        .card { background: white; border-radius: 24px; padding: 24px; margin-bottom: 20px; }
-        /* 加载圈 */
-        .spinner-white { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        .shadow-apple { box-shadow: 0 4px 20px rgba(0,0,0,0.05), 0 1px 4px rgba(0,0,0,0.03); }
+        .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 14px; }
+        .spinner { border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .chart-container { position: relative; height: 200px; width: 100%; }
-        /* 隐藏滚动条但允许滚动 */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 状态点样式 */
+        .dot-status { width: 10px; height: 10px; border-radius: 50%; }
+        .dot-green { background-color: #34C759; box-shadow: 0 0 4px rgba(52, 199, 89, 0.4); }
+        .dot-red { background-color: #FF3B30; opacity: 0.3; }
+        .dot-future { background-color: #E5E5EA; }
     </style>
-    <script>
-        dayjs.locale('zh-cn'); // 设置日期为中文
-        // 自定义 Tailwind 配置以支持特定的蒂芙尼蓝
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { tiffany: { 400: '#81D8D0', 500: '#4deadd' } }
-                }
-            }
-        }
-    </script>
+    <script>dayjs.locale('zh-cn');</script>
 </head>
-<body class="p-5 max-w-md mx-auto">
+<body class="p-4 max-w-sm mx-auto">
 
-    <div class="mt-8 mb-6 flex justify-between items-end">
+    <div class="mt-4 mb-4 flex justify-between items-center px-1">
         <div>
-            <p class="text-sm text-gray-500 font-medium mb-1" id="todayDate">加载中...</p>
-            <h1 class="text-4xl font-extrabold tracking-tight text-gray-900">摘要</h1>
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5" id="todayDate">LOADING...</p>
+            <h1 class="text-2xl font-extrabold text-gray-900">摘要</h1>
         </div>
-        <div class="flex items-center space-x-3">
-             <div id="statusBadge" class="flex items-center bg-gray-200/80 backdrop-blur px-3 py-1.5 rounded-full text-xs font-semibold text-gray-600 transition-all">
-                <span class="w-2 h-2 mr-2 rounded-full bg-gray-400" id="statusDot"></span>
-                <span id="statusText">未连接</span>
+        <button onclick="openSettings()" class="bg-white p-2 rounded-full shadow-sm active:scale-95 transition">
+            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </button>
+    </div>
+
+    <div id="medCard" class="card shadow-apple bg-gradient-to-br from-blue-500 to-indigo-600 text-white relative overflow-hidden transition-all duration-500">
+        <div id="loadingOverlay" class="absolute inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-20 hidden"><div class="spinner"></div></div>
+        
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h2 class="text-base font-bold">每日服药 (每次2粒)</h2>
+                <p class="text-xs opacity-80">坚持规律服药是治疗关键</p>
             </div>
-            <button onclick="openSettings()" class="bg-gray-200/80 backdrop-blur p-2 rounded-full text-gray-600 hover:bg-gray-300 transition">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-                  <path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 000 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.819l1.019-.393c.115-.044.283-.032.45.083a7.49 7.49 0 00.986.57c.182.088.277.228.297.348l.177 1.072c.151.904.933 1.567 1.85 1.567h1.844c.917 0 1.699-.663 1.85-1.567l.177-1.072c.02-.12.115-.26.297-.348.325-.157.65-.332.986-.57.166-.115.334-.126.45-.083l1.019.393a1.875 1.875 0 002.282-.819l.922-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 000-1.139c-.015-.2.059-.352.153-.43l.841-.692a1.875 1.875 0 00.432-2.385l-.922-1.597a1.875 1.875 0 00-2.282-.819l-1.019.393c-.115.044-.283.032-.45-.083a7.49 7.49 0 00-.986-.57c-.182-.088-.277-.228-.297-.348l-.177-1.072c-.151-.904-.933-1.567-1.85-1.567h-1.844zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clip-rule="evenodd" />
-                </svg>
+            <div class="flex items-center bg-black/10 rounded-lg px-2 py-1 gap-2">
+                <span class="text-xs font-bold">💧 <span id="waterCount">0</span>/<span id="waterTarget">8</span></span>
+                <button onclick="updateWater(1)" class="w-5 h-5 bg-white/20 rounded text-xs flex items-center justify-center hover:bg-white/30">+</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="checkIn('am')" id="btnAm" class="group relative flex flex-col items-center justify-center py-4 rounded-xl border border-white/20 bg-white/10 active:scale-95 transition-all">
+                <div id="iconAm" class="text-2xl mb-1 opacity-50">☀️</div>
+                <span id="textAm" class="text-sm font-bold opacity-80">早晨服药</span>
+                <span id="timeAm" class="text-[10px] opacity-60 mt-1 h-3">--:--</span>
+                <div id="checkAm" class="absolute inset-0 bg-white/90 rounded-xl hidden flex-col items-center justify-center text-green-600 transition-opacity">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                    <span class="text-xs font-bold mt-1">早晨已服</span>
+                </div>
+            </button>
+
+            <button onclick="checkIn('pm')" id="btnPm" class="group relative flex flex-col items-center justify-center py-4 rounded-xl border border-white/20 bg-white/10 active:scale-95 transition-all">
+                <div id="iconPm" class="text-2xl mb-1 opacity-50">🌙</div>
+                <span id="textPm" class="text-sm font-bold opacity-80">晚间服药</span>
+                <span id="timePm" class="text-[10px] opacity-60 mt-1 h-3">--:--</span>
+                <div id="checkPm" class="absolute inset-0 bg-white/90 rounded-xl hidden flex-col items-center justify-center text-indigo-600 transition-opacity">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                    <span class="text-xs font-bold mt-1">晚间已服</span>
+                </div>
             </button>
         </div>
     </div>
 
-    <div id="errorBox" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-2xl card-shadow mx-1">
-        <div class="flex">
-            <div class="flex-shrink-0 text-red-500">⚠️</div>
-            <div class="ml-3">
-                <p class="text-sm text-red-800 font-bold" id="errorTitle">出错了</p>
-                <p class="text-xs text-red-700 mt-1 font-medium" id="errorMsg">详细信息...</p>
+    <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="card shadow-apple mb-0 p-4 flex flex-col justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase">当前库存</span>
+            <div class="flex items-end gap-1 my-1">
+                <span class="text-3xl font-extrabold text-gray-900" id="stockCount">--</span>
+                <span class="text-xs text-gray-500 mb-1 font-bold">粒</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-1.5"><div id="stockBar" class="bg-blue-500 h-1.5 rounded-full" style="width: 50%"></div></div>
+        </div>
+        <div class="card shadow-apple mb-0 p-4 flex flex-col justify-between">
+            <span class="text-xs font-bold text-gray-400 uppercase">距离复查</span>
+            <div class="flex items-end gap-1 my-1">
+                <span class="text-3xl font-extrabold text-gray-900" id="daysUntil">--</span>
+                <span class="text-xs text-gray-500 mb-1 font-bold">天</span>
+            </div>
+            <p class="text-[10px] text-gray-400" id="visitDate">目标: --/--</p>
+        </div>
+    </div>
+
+    <div class="card shadow-apple p-4 mb-3">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-bold text-gray-800">近 7 天服药概况</h3>
+            <button onclick="showHistoryModal()" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md">查看更多</button>
+        </div>
+        <div class="flex justify-between" id="weekHistory">
+            </div>
+        <div class="flex justify-end gap-3 mt-2 text-[10px] text-gray-400">
+            <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#34C759]"></div>已服</span>
+            <span class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-[#FF3B30] opacity-30"></div>未服</span>
+        </div>
+    </div>
+
+    <div class="card shadow-apple p-4 mb-3 bg-amber-50/50 border border-amber-100/50">
+        <div class="flex gap-2">
+            <div class="mt-0.5 text-amber-500">💡</div>
+            <div class="text-xs text-gray-600 leading-relaxed">
+                <span class="font-bold text-gray-800">医嘱备忘：</span>
+                每日早晚各一次，每次 2 粒。服药前后 2 小时禁食。
             </div>
         </div>
     </div>
 
-    <div id="medicationCard" class="card card-shadow relative overflow-hidden bg-gradient-to-br from-pink-500 to-purple-600 text-white transition-all duration-500 ease-in-out transform hover:scale-[1.01]">
-        
-        <div id="loadingOverlay" class="absolute inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-20 hidden transition-all">
-            <div class="spinner-white"></div>
+    <div class="card shadow-apple p-4 mb-6">
+        <div class="flex justify-between items-center mb-2">
+            <h3 class="text-sm font-bold text-gray-800">BCR-ABL (IS%)</h3>
+            <span class="text-[10px] bg-gray-100 px-1 rounded text-gray-500">对数轴</span>
         </div>
-        
-        <div class="relative z-10">
-            <h2 class="text-lg font-bold opacity-90 mb-1">今日服药 & 饮水</h2>
-            <p class="text-sm opacity-75 font-medium mb-6">保持规律，稳定前行</p>
-            
-            <div id="actionArea">
-                <button onclick="handleCheckIn()" class="w-full bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white py-5 rounded-3xl text-2xl font-bold shadow-sm transition-all active:scale-95 flex items-center justify-center space-x-3">
-                    <span class="text-3xl">💊</span>
-                    <span>确认服药</span>
-                </button>
-            </div>
-
-            <div id="statusArea" class="hidden py-4 text-center">
-                <div class="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-md rounded-full mb-3 shadow-inner border border-white/30">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-12 h-12">
-                      <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <p class="text-2xl font-bold">今日已完成</p>
-                <p class="text-sm opacity-80 mt-1 font-medium" id="checkInTime">--:--</p>
-            </div>
-
-            <div class="mt-8 pt-5 border-t border-white/20">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-base font-bold flex items-center"><span class="text-xl mr-2">💧</span> 今日饮水</span>
-                    <span class="text-xl font-bold"><span id="waterCount" class="text-2xl">0</span> <span class="opacity-70 text-base">/ <span id="waterTarget">8</span> 杯</span></span>
-                </div>
-                <div class="flex justify-center gap-4">
-                    <button onclick="updateWater(-1)" class="w-14 h-14 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur border border-white/30 text-white text-2xl font-medium transition flex items-center justify-center active:scale-95">-</button>
-                    <button onclick="updateWater(1)" class="w-14 h-14 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur border border-white/30 text-white text-2xl font-medium transition flex items-center justify-center active:scale-95">+</button>
-                </div>
-            </div>
-        </div>
+        <div style="height: 180px;"><canvas id="chartBcr"></canvas></div>
     </div>
 
-    <div class="grid grid-cols-2 gap-5 mb-6">
-        <div class="card card-shadow mb-0 flex flex-col justify-between p-5 transform transition hover:scale-[1.02]">
-            <div class="flex items-center space-x-2 mb-3">
-                 <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69w-8.25 8.25 0 01-14.59-5.28z" clip-rule="evenodd" /></svg>
-                 </div>
-                <h3 class="text-base font-bold text-gray-900">药物库存</h3>
-            </div>
-            <div>
-                <div class="flex items-baseline">
-                    <span class="text-4xl font-extrabold text-gray-900 tracking-tight" id="stockCount">--</span>
-                    <span class="text-gray-500 font-bold ml-1">粒</span>
-                </div>
-                <div class="w-full bg-gray-100 rounded-full h-2 mt-4 overflow-hidden">
-                    <div class="bg-blue-500 h-full rounded-full transition-all duration-500" style="width: 0%" id="stockBar"></div>
-                </div>
-            </div>
-        </div>
-        <div class="card card-shadow mb-0 flex flex-col justify-between p-5 transform transition hover:scale-[1.02]">
-            <div class="flex items-center space-x-2 mb-3">
-                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM7.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM8.25 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.75 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM10.5 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12.75 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM14.25 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 13.5a.75.75 0 100-1.5.75.75 0 000 1.5z" /><path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0117.25 3v1.5h1.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-13.5A1.125 1.125 0 014 15.375v-9.75c0-.621.504-1.125 1.125-1.125H6.5V3a.75.75 0 01.75-.75zM6.75 18v-1.5h10.5V18a1.875 1.875 0 01-1.875 1.875h-6.75A1.875 1.875 0 016.75 18z" clip-rule="evenodd" /></svg>
-                </div>
-                <h3 class="text-base font-bold text-gray-900">距离复查</h3>
-            </div>
-            <div>
-                 <div class="flex items-baseline">
-                    <span class="text-4xl font-extrabold text-gray-900 tracking-tight" id="daysUntil">--</span>
-                    <span class="text-gray-500 font-bold ml-1">天</span>
-                </div>
-                <p class="text-sm text-indigo-600 font-bold mt-3 bg-indigo-50 inline-block px-3 py-1 rounded-lg" id="visitDate">目标: --</p>
-            </div>
-        </div>
-    </div>
+    <button onclick="openEntryModal()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl text-base font-bold shadow-lg shadow-blue-500/30 active:scale-95 transition flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        <span>录入化验单 / 更新库存</span>
+    </button>
 
-    <h2 class="text-2xl font-bold text-gray-900 mb-5 px-1">趋势分析</h2>
-    
-    <div class="card card-shadow p-5">
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h3 class="text-xl font-bold text-gray-900">BCR-ABL (IS%)</h3>
-                <p class="text-sm text-gray-500 font-medium">融合基因监测 (对数坐标)</p>
-            </div>
-        </div>
-        <div class="chart-container">
-            <canvas id="chartBcr"></canvas>
-        </div>
-    </div>
-
-    <div class="card card-shadow p-5">
-        <div class="flex justify-between items-center mb-6">
-             <div>
-                <h3 class="text-xl font-bold text-gray-900">血常规</h3>
-                <p class="text-sm text-gray-500 font-medium">白细胞 & 血小板</p>
-            </div>
-        </div>
-        <div class="chart-container">
-            <canvas id="chartBlood"></canvas>
-        </div>
-    </div>
-
-    <div class="text-center mb-10">
-         <button onclick="addTijianData()" class="bg-white hover:bg-gray-50 text-blue-600 px-6 py-3 rounded-full text-base font-bold shadow-md active:scale-95 transition flex items-center justify-center mx-auto space-x-2 border border-blue-100">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg>
-            <span>录入新化验单</span>
-        </button>
-    </div>
-
-    <div class="card card-shadow bg-amber-50/80 border border-amber-100/50 p-6 mb-8 backdrop-blur">
-        <div class="flex items-center space-x-2 mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-amber-500"><path fill-rule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 013.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 013.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 01-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875zM12.75 12a.75.75 0 00-1.5 0V9.75a.75.75 0 00-1.5 0V12a.75.75 0 00-1.5 0v2.25a.75.75 0 001.5 0V15a.75.75 0 001.5 0v-.75a.75.75 0 001.5 0v2.25a.75.75 0 001.5 0V12z" clip-rule="evenodd" /><path d="M14.25 5.25a.75.75 0 000 1.5h2.25a.75.75 0 000-1.5H14.25z" /></svg>
-            <h3 class="text-lg font-bold text-gray-900">重要医嘱与备注</h3>
-        </div>
-        <div class="text-gray-700 text-sm leading-relaxed font-medium space-y-2">
-            <p>• 务必每日定时服药，不可擅自停药或增减剂量。</p>
-            <p>• 服药前后2小时避免食用葡萄柚（西柚）及其制品。</p>
-            <p>• 若出现发热、出血点或严重疲劳，请及时就医。</p>
-            <p class="text-amber-600 text-xs pt-2">（此区域文字请在 index.html 底部手动编辑修改）</p>
-        </div>
-    </div>
-
-    <div id="settingsModal" class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-6 transition-opacity">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl scale-100 transition-transform">
+    <div id="entryModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center transition-opacity">
+        <div class="bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up">
             <div class="flex justify-between items-center mb-6">
-                 <h2 class="text-2xl font-extrabold text-gray-900">连接数据仓库</h2>
-                 <button onclick="closeSettings()" class="text-gray-400 hover:text-gray-600"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" /></svg></button>
+                <h2 class="text-lg font-bold">更新数据</h2>
+                <button onclick="closeEntryModal()" class="text-gray-400 p-1">✕</button>
             </div>
             
-            <div class="space-y-5">
+            <div class="space-y-4">
                 <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase block mb-2 ml-1">Github Username</label>
-                    <input type="text" id="cfgUser" class="w-full bg-gray-100 border-none rounded-xl p-4 text-base font-bold text-gray-900 focus:ring-2 focus:ring-blue-500/50 outline-none transition">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">本次化验日期</label>
+                    <input type="date" id="inDate" class="w-full bg-gray-100 rounded-lg p-3 text-sm font-bold outline-none">
                 </div>
-                <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase block mb-2 ml-1">Repository Name</label>
-                    <input type="text" id="cfgRepo" class="w-full bg-gray-100 border-none rounded-xl p-4 text-base font-bold text-gray-900 focus:ring-2 focus:ring-blue-500/50 outline-none transition" placeholder="e.g. cml-tracker">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">白细胞 (WBC)</label>
+                        <input type="number" id="inWbc" placeholder="选填" class="w-full bg-gray-100 rounded-lg p-3 text-sm font-bold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">BCR-ABL %</label>
+                        <input type="number" id="inBcr" placeholder="选填" class="w-full bg-gray-100 rounded-lg p-3 text-sm font-bold outline-none">
+                    </div>
                 </div>
-                <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase block mb-2 ml-1">Access Token</label>
-                    <input type="password" id="cfgToken" class="w-full bg-gray-100 border-none rounded-xl p-4 text-base font-bold text-gray-900 focus:ring-2 focus:ring-blue-500/50 outline-none transition" placeholder="ghp_...">
+                
+                <div class="border-t border-gray-100 my-2 pt-2">
+                    <p class="text-xs text-blue-500 font-bold mb-3">配置更新 (可选)</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">修正剩余库存</label>
+                            <input type="number" id="inStock" class="w-full bg-blue-50 text-blue-800 rounded-lg p-3 text-sm font-bold outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">下次复查日期</label>
+                            <input type="date" id="inNextVisit" class="w-full bg-blue-50 text-blue-800 rounded-lg p-3 text-sm font-bold outline-none">
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <button onclick="saveSettings()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-4 font-bold text-lg shadow-lg shadow-blue-500/30 mt-8 transition active:scale-[0.98]">保存并同步</button>
-            
-             <p class="text-xs text-gray-400 mt-6 text-center font-medium leading-relaxed">Token 仅保存在本地浏览器用于访问 Github API。<br>本页面不收集任何个人隐私数据。</p>
+            <button onclick="saveEntryData()" class="w-full mt-6 bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30">保存所有更改</button>
         </div>
     </div>
+
+    <div id="historyModal" class="fixed inset-0 bg-white z-50 hidden overflow-y-auto">
+        <div class="p-4 max-w-sm mx-auto">
+            <div class="flex justify-between items-center mb-6 mt-2">
+                <h2 class="text-xl font-bold">服药历史 (近60天)</h2>
+                <button onclick="document.getElementById('historyModal').classList.add('hidden')" class="bg-gray-100 p-2 rounded-full text-sm font-bold text-gray-600">关闭</button>
+            </div>
+            <div id="historyList" class="space-y-2">
+                </div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-6">
+        <div class="bg-white w-full rounded-2xl p-6 shadow-2xl">
+            <h2 class="text-lg font-bold mb-4">Github 设置</h2>
+            <div class="space-y-3">
+                <input type="text" id="cfgUser" class="w-full bg-gray-100 rounded-lg p-3 text-sm" placeholder="Username">
+                <input type="text" id="cfgRepo" class="w-full bg-gray-100 rounded-lg p-3 text-sm" placeholder="Repo Name">
+                <input type="password" id="cfgToken" class="w-full bg-gray-100 rounded-lg p-3 text-sm" placeholder="Token">
+            </div>
+            <button onclick="saveSettings()" class="w-full mt-4 bg-blue-600 text-white py-3 rounded-xl font-bold text-sm">保存连接</button>
+            <button onclick="document.getElementById('settingsModal').classList.add('hidden')" class="w-full mt-2 text-gray-400 text-sm py-2">取消</button>
+        </div>
+    </div>
+
+    <div id="errorBox" class="hidden fixed top-4 left-4 right-4 bg-red-500 text-white p-3 rounded-lg shadow-lg z-[60] text-sm font-bold text-center"></div>
 
     <script>
-        const CACHE_KEY = 'cml_gh_config_v3'; // 升级版本号清理旧缓存
+        const CACHE_KEY = 'cml_config_v5'; 
         let config = JSON.parse(localStorage.getItem(CACHE_KEY));
         let appData = { tixing: null, chiyao: [], tijian: [] };
         let shas = {};
 
         async function init() {
-            document.getElementById('todayDate').innerText = dayjs().format('M月D日 dddd');
+            document.getElementById('todayDate').innerText = dayjs().format('MM月DD日 dddd');
+            if (!config) { openSettings(); return; }
             
-            if (!config) {
-                setStatus('setup', '请先配置');
-                openSettings();
-                return;
-            }
-
-            setStatus('loading', '正在同步...');
-            hideError();
-
+            setLoading(true);
             try {
-                await loadFile('tixing.json', 'tixing');
-                await loadFile('chiyao.json', 'chiyao');
-                await loadFile('tijian.json', 'tijian');
-                
+                await Promise.all([
+                    loadFile('tixing.json', 'tixing'),
+                    loadFile('chiyao.json', 'chiyao'),
+                    loadFile('tijian.json', 'tijian')
+                ]);
                 renderUI();
-                setStatus('success', '已连接');
             } catch (err) {
-                console.error(err);
-                setStatus('error', '同步失败');
-                showError('无法加载数据', err.message + "。请检查网络或设置。");
+                showError(err.message);
             }
+            setLoading(false);
         }
 
+        // --- 网络层 ---
         async function loadFile(filename, key) {
-            const url = `https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`;
-            const res = await fetch(url, {
-                headers: { 
-                    'Authorization': `token ${config.token}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                },
-                cache: "no-store"
+            const res = await fetch(`https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`, {
+                headers: { 'Authorization': `token ${config.token}`, 'Accept': 'application/vnd.github.v3+json' }, cache: "no-store"
             });
-
-            if (res.status === 404) throw new Error(`找不到 ${filename}，请检查仓库中是否存在此文件`);
-            if (res.status === 401) throw new Error(`Token 错误或过期`);
-            if (!res.ok) throw new Error(`网络错误 (${res.status})`);
-
+            if (!res.ok) throw new Error(`无法加载 ${filename}`);
             const json = await res.json();
             shas[filename] = json.sha;
-
-            try {
-                const rawContent = decodeURIComponent(escape(window.atob(json.content)));
-                appData[key] = JSON.parse(rawContent);
-            } catch (parseErr) {
-                throw new Error(`${filename} 文件内容格式有误，请检查 JSON 语法`);
-            }
+            appData[key] = JSON.parse(decodeURIComponent(escape(window.atob(json.content))));
         }
 
         async function saveFile(filename, contentObj) {
-            const url = `https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`;
-            // 格式化 JSON 方便在 Github 查看
-            const contentStr = JSON.stringify(contentObj, null, 2); 
-            const contentBase64 = window.btoa(unescape(encodeURIComponent(contentStr)));
-
-            const body = {
-                message: `📱 App update ${filename} - ${dayjs().format('MM-DD HH:mm')}`,
-                content: contentBase64,
-                sha: shas[filename]
-            };
-
-            const res = await fetch(url, {
+            const contentBase64 = window.btoa(unescape(encodeURIComponent(JSON.stringify(contentObj, null, 2))));
+            const res = await fetch(`https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `token ${config.token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(body)
+                headers: { 'Authorization': `token ${config.token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `Update ${filename}`, content: contentBase64, sha: shas[filename] })
             });
-
-            if (res.status === 409) throw new Error("数据版本冲突，请刷新页面后重试");
-            if (!res.ok) throw new Error(`保存失败 (${res.status})`);
-
-            const resJson = await res.json();
-            shas[filename] = resJson.content.sha;
+            if (!res.ok) throw new Error("保存失败");
+            const json = await res.json();
+            shas[filename] = json.content.sha;
         }
 
-        function renderUI() {
-            renderMedication();
-            renderDashboard();
-            renderCharts();
-        }
-
-        function renderMedication() {
-            const today = dayjs().format('YYYY-MM-DD');
-            if (!Array.isArray(appData.chiyao)) appData.chiyao = [];
-
-            const log = appData.chiyao.find(item => item.date === today);
-            const medCard = document.getElementById('medicationCard');
-
-            if (log && log.taken) {
-                // 切换到绿色渐变 (Tiffany Blue)
-                medCard.classList.remove('from-pink-500', 'to-purple-600');
-                medCard.classList.add('from-tiffany-400', 'to-tiffany-500');
-                
-                document.getElementById('actionArea').classList.add('hidden');
-                document.getElementById('statusArea').classList.remove('hidden');
-                document.getElementById('checkInTime').innerText = `于 ${log.time} 完成`;
-            } else {
-                // 切换回粉色渐变
-                medCard.classList.remove('from-tiffany-400', 'to-tiffany-500');
-                medCard.classList.add('from-pink-500', 'to-purple-600');
-
-                document.getElementById('actionArea').classList.remove('hidden');
-                document.getElementById('statusArea').classList.add('hidden');
-            }
-
-            const water = log ? (log.water_count || 0) : 0;
-            const target = appData.tixing.water_target || 8;
-            document.getElementById('waterCount').innerText = water;
-            document.getElementById('waterTarget').innerText = target;
-        }
-
-        function renderDashboard() {
-            const conf = appData.tixing;
-            if (!conf) return;
-
-            // 库存
-            document.getElementById('stockCount').innerText = conf.total_pills;
-            const maxStock = 120; 
-            const percent = Math.min(100, (conf.total_pills / maxStock) * 100);
-            const stockBar = document.getElementById('stockBar');
-            stockBar.style.width = `${percent}%`;
-            stockBar.className = conf.total_pills < 14 
-                ? 'h-full rounded-full bg-red-500 transition-all duration-500' 
-                : 'h-full rounded-full bg-blue-500 transition-all duration-500';
-
-            // 复查
-            const nextDate = dayjs(conf.next_visit_date);
-            const diff = nextDate.diff(dayjs(), 'day');
-            const daysUntilEl = document.getElementById('daysUntil');
-            daysUntilEl.innerText = diff > 0 ? diff : 0;
-            daysUntilEl.className = diff < 7 
-                ? "text-5xl font-extrabold text-red-500 tracking-tight" 
-                : "text-5xl font-extrabold text-gray-900 tracking-tight";
-            document.getElementById('visitDate').innerText = `目标: ${nextDate.format('MM月DD日')}`;
-        }
-
-        let chartBcrInstance = null;
-        let chartBloodInstance = null;
-
-        function renderCharts() {
-            Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
-            Chart.defaults.color = '#8e8e93';
-            Chart.defaults.scale.grid.color = '#e5e5ea';
-
-            const sorted = [...appData.tijian].sort((a,b) => dayjs(a.date).diff(dayjs(b.date)));
-            const labels = sorted.map(d => dayjs(d.date).format('M/D'));
-
-            if (chartBcrInstance) chartBcrInstance.destroy();
-            if (chartBloodInstance) chartBloodInstance.destroy();
-
-            const ctxBcr = document.getElementById('chartBcr').getContext('2d');
-            // 创建渐变背景
-            let bcrGradient = ctxBcr.createLinearGradient(0, 0, 0, 200);
-            bcrGradient.addColorStop(0, 'rgba(37, 99, 235, 0.2)');
-            bcrGradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
-
-            chartBcrInstance = new Chart(ctxBcr, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'BCR-ABL %',
-                        data: sorted.map(d => d.bcr_abl),
-                        borderColor: '#2563eb',
-                        backgroundColor: bcrGradient,
-                        pointBackgroundColor: '#2563eb',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        borderWidth: 3,
-                        tension: 0.3,
-                        fill: true,
-                        spanGaps: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { type: 'logarithmic', grid: { borderDash: [4, 4] } },
-                        x: { grid: {display: false} }
-                    },
-                    plugins: { legend: {display: false}, tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, cornerRadius: 8 } }
-                }
-            });
-
-            const ctxBlood = document.getElementById('chartBlood').getContext('2d');
-            chartBloodInstance = new Chart(ctxBlood, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: '白细胞',
-                            data: sorted.map(d => d.wbc),
-                            borderColor: '#34d399', backgroundColor: '#34d399',
-                            pointBackgroundColor: '#34d399', pointBorderColor: '#fff', pointBorderWidth: 2,
-                            yAxisID: 'y', tension: 0.3, borderWidth: 3
-                        },
-                        {
-                            label: '血小板',
-                            data: sorted.map(d => d.plt),
-                            borderColor: '#fbbf24', backgroundColor: '#fbbf24',
-                             pointBackgroundColor: '#fbbf24', pointBorderColor: '#fff', pointBorderWidth: 2,
-                            yAxisID: 'y1', tension: 0.3, borderWidth: 3
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        y: { position: 'left', grid: { borderDash: [4, 4] } },
-                        y1: { position: 'right', grid: {display: false} },
-                        x: { grid: {display: false} }
-                    },
-                     plugins: { tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, cornerRadius: 8 } }
-                }
-            });
-        }
-
-        async function handleCheckIn() {
+        // --- 核心逻辑 ---
+        async function checkIn(type) {
+            // type: 'am' or 'pm'
             setLoading(true);
             try {
                 const today = dayjs().format('YYYY-MM-DD');
-                let log = appData.chiyao.find(l => l.date === today);
+                if (!Array.isArray(appData.chiyao)) appData.chiyao = [];
                 
+                let log = appData.chiyao.find(l => l.date === today);
                 if (!log) {
-                    log = { date: today, taken: true, time: dayjs().format('HH:mm'), water_count: 0 };
+                    log = { date: today, taken_am: false, time_am: "", taken_pm: false, time_pm: "", water_count: 0 };
                     appData.chiyao.push(log);
-                } else {
-                    log.taken = true;
-                    log.time = dayjs().format('HH:mm');
                 }
 
-                appData.tixing.total_pills = Math.max(0, appData.tixing.total_pills - appData.tixing.daily_dose);
+                // 防止重复点击
+                if ((type === 'am' && log.taken_am) || (type === 'pm' && log.taken_pm)) {
+                    setLoading(false); return;
+                }
 
-                await Promise.all([
-                    saveFile('chiyao.json', appData.chiyao),
-                    saveFile('tixing.json', appData.tixing)
-                ]);
-                
+                // 标记状态
+                if (type === 'am') { log.taken_am = true; log.time_am = dayjs().format('HH:mm'); }
+                if (type === 'pm') { log.taken_pm = true; log.time_pm = dayjs().format('HH:mm'); }
+
+                // 扣库存 (根据 single_dose，如果没设置默认扣2粒)
+                const dose = appData.tixing.single_dose || 2; 
+                appData.tixing.total_pills = Math.max(0, appData.tixing.total_pills - dose);
+
+                await Promise.all([saveFile('chiyao.json', appData.chiyao), saveFile('tixing.json', appData.tixing)]);
                 renderUI();
-            } catch (e) {
-                showError('打卡失败', e.message);
-            }
+            } catch (e) { showError(e.message); }
             setLoading(false);
         }
 
         async function updateWater(delta) {
             const today = dayjs().format('YYYY-MM-DD');
             let log = appData.chiyao.find(l => l.date === today);
-            if (!log) {
-                log = { date: today, taken: false, time: "", water_count: 0 };
-                appData.chiyao.push(log);
-            }
-            let newVal = (log.water_count || 0) + delta;
-            if (newVal < 0) newVal = 0;
-            log.water_count = newVal;
-            document.getElementById('waterCount').innerText = newVal;
-            try { await saveFile('chiyao.json', appData.chiyao); } catch (e) { console.error(e); }
+            if (!log) { log = { date: today, taken_am: false, taken_pm: false, water_count: 0 }; appData.chiyao.push(log); }
+            log.water_count = (log.water_count || 0) + delta;
+            document.getElementById('waterCount').innerText = log.water_count;
+            try { await saveFile('chiyao.json', appData.chiyao); } catch(e){}
         }
 
-        async function addTijianData() {
-            const date = prompt("日期 (YYYY-MM-DD):", dayjs().format('YYYY-MM-DD'));
-            if (!date) return;
-            const wbc = prompt("白细胞 (WBC):", "");
-            const bcr = prompt("融合基因 (BCR-ABL %): (没有就空着)", "");
-            
-            const newEntry = { date: date };
-            if (wbc) newEntry.wbc = parseFloat(wbc);
-            if (bcr) newEntry.bcr_abl = parseFloat(bcr);
-            newEntry.plt = null; newEntry.hgb = null;
+        // --- 渲染 UI ---
+        function renderUI() {
+            const today = dayjs().format('YYYY-MM-DD');
+            const log = appData.chiyao.find(l => l.date === today) || {};
 
+            // 1. 药卡状态
+            const updateBtn = (type, taken, time) => {
+                const capType = type.charAt(0).toUpperCase() + type.slice(1);
+                const checkEl = document.getElementById(`check${capType}`);
+                const timeEl = document.getElementById(`time${capType}`);
+                
+                if (taken) {
+                    checkEl.classList.remove('hidden');
+                    checkEl.classList.add('flex');
+                    timeEl.innerText = time;
+                } else {
+                    checkEl.classList.add('hidden');
+                    checkEl.classList.remove('flex');
+                    timeEl.innerText = "";
+                }
+            };
+            updateBtn('am', log.taken_am, log.time_am);
+            updateBtn('pm', log.taken_pm, log.time_pm);
+
+            // 药卡背景渐变：全完成(绿) -> 部分完成(蓝)
+            const card = document.getElementById('medCard');
+            if (log.taken_am && log.taken_pm) {
+                card.className = "card shadow-apple bg-gradient-to-br from-emerald-500 to-green-500 text-white relative overflow-hidden transition-all duration-500";
+            } else {
+                card.className = "card shadow-apple bg-gradient-to-br from-blue-500 to-indigo-600 text-white relative overflow-hidden transition-all duration-500";
+            }
+
+            // 2. 饮水与库存
+            document.getElementById('waterCount').innerText = log.water_count || 0;
+            document.getElementById('waterTarget').innerText = appData.tixing.water_target || 8;
+            
+            const stock = appData.tixing.total_pills;
+            document.getElementById('stockCount').innerText = stock;
+            const pct = Math.min(100, (stock / 120) * 100);
+            document.getElementById('stockBar').style.width = `${pct}%`;
+            document.getElementById('stockBar').className = `h-1.5 rounded-full ${stock<14?'bg-red-500':'bg-white/50'}`; // 库存条颜色
+
+            const daysLeft = dayjs(appData.tixing.next_visit_date).diff(dayjs(), 'day');
+            document.getElementById('daysUntil').innerText = daysLeft > 0 ? daysLeft : 0;
+            document.getElementById('visitDate').innerText = `目标: ${dayjs(appData.tixing.next_visit_date).format('MM/DD')}`;
+
+            // 3. 历史小卡片 (近7天)
+            renderWeekHistory();
+            renderCharts();
+        }
+
+        function renderWeekHistory() {
+            const container = document.getElementById('weekHistory');
+            container.innerHTML = '';
+            // 生成过去6天 + 今天
+            for (let i = 6; i >= 0; i--) {
+                const d = dayjs().subtract(i, 'day');
+                const dStr = d.format('YYYY-MM-DD');
+                const log = appData.chiyao.find(l => l.date === dStr);
+                const isFuture = d.isAfter(dayjs(), 'day');
+
+                // 状态逻辑：红(漏服), 绿(已服), 灰(未来/今日未到时间暂不标红? 简化起见，未服即红，未来灰)
+                // 这里做个优化：如果是“今天”，还没打卡，显示灰色空心或者特定样式，别直接给红的压力太大。
+                // 简化版：早/晚两个点
+                
+                const getDotClass = (taken) => taken ? 'dot-green' : (dStr === dayjs().format('YYYY-MM-DD') ? 'dot-future border border-gray-300' : 'dot-red');
+
+                const amClass = getDotClass(log?.taken_am);
+                const pmClass = getDotClass(log?.taken_pm);
+
+                const col = document.createElement('div');
+                col.className = 'flex flex-col items-center gap-1.5';
+                col.innerHTML = `
+                    <span class="text-[10px] text-gray-400 font-bold">${d.format('DD')}</span>
+                    <div class="dot-status ${amClass}"></div>
+                    <div class="dot-status ${pmClass}"></div>
+                `;
+                container.appendChild(col);
+            }
+        }
+
+        function renderHistoryModal() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '';
+            // 生成60天
+            const logsMap = {};
+            appData.chiyao.forEach(l => logsMap[l.date] = l);
+
+            for (let i = 0; i < 60; i++) {
+                const d = dayjs().subtract(i, 'day');
+                const dStr = d.format('YYYY-MM-DD');
+                const log = logsMap[dStr];
+                
+                const amStatus = log?.taken_am ? '<span class="text-green-500 font-bold">早 ✔</span>' : '<span class="text-red-400 opacity-50">早 ✕</span>';
+                const pmStatus = log?.taken_pm ? '<span class="text-green-500 font-bold">晚 ✔</span>' : '<span class="text-red-400 opacity-50">晚 ✕</span>';
+
+                const row = document.createElement('div');
+                row.className = "flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100";
+                row.innerHTML = `
+                    <span class="font-bold text-gray-700">${d.format('MM月DD日')}</span>
+                    <div class="text-sm flex gap-4">${amStatus} ${pmStatus}</div>
+                `;
+                list.appendChild(row);
+            }
+        }
+
+        function renderCharts() {
+            const ctx = document.getElementById('chartBcr').getContext('2d');
+            const data = [...appData.tijian].sort((a,b)=>dayjs(a.date).diff(dayjs(b.date)));
+            
+            // 简单图表，仅BCR
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d=>dayjs(d.date).format('MM/DD')),
+                    datasets: [{
+                        label: 'BCR-ABL', data: data.map(d=>d.bcr_abl),
+                        borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill:true, tension:0.3
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { type: 'logarithmic', grid:{borderDash:[4,4]} }, x:{grid:{display:false}} },
+                    plugins: { legend: {display:false} }
+                }
+            });
+        }
+
+        // --- 全能录入功能 ---
+        function openEntryModal() {
+            document.getElementById('entryModal').classList.remove('hidden');
+            // 填充默认值
+            document.getElementById('inDate').value = dayjs().format('YYYY-MM-DD');
+            document.getElementById('inStock').value = appData.tixing.total_pills;
+            document.getElementById('inNextVisit').value = appData.tixing.next_visit_date;
+        }
+        function closeEntryModal() { document.getElementById('entryModal').classList.add('hidden'); }
+        
+        async function saveEntryData() {
             setLoading(true);
             try {
-                appData.tijian.push(newEntry);
-                await saveFile('tijian.json', appData.tijian);
+                // 1. 保存化验单 (如果有填)
+                const date = document.getElementById('inDate').value;
+                const wbc = document.getElementById('inWbc').value;
+                const bcr = document.getElementById('inBcr').value;
+                
+                if (wbc || bcr) {
+                    const entry = { date: date, wbc: wbc?parseFloat(wbc):null, bcr_abl: bcr?parseFloat(bcr):null };
+                    appData.tijian.push(entry);
+                }
+
+                // 2. 更新配置
+                const stock = parseInt(document.getElementById('inStock').value);
+                const nextVisit = document.getElementById('inNextVisit').value;
+                
+                if (!isNaN(stock)) appData.tixing.total_pills = stock;
+                if (nextVisit) appData.tixing.next_visit_date = nextVisit;
+
+                // 3. 批量上传
+                await Promise.all([
+                    saveFile('tijian.json', appData.tijian),
+                    saveFile('tixing.json', appData.tixing)
+                ]);
+                
+                closeEntryModal();
                 renderUI();
-            } catch(e) {
-                showError('保存失败', e.message);
-            }
+                showError("数据已更新 ✨"); // 其实是Success Message，借用ErrorBox显示
+                document.getElementById('errorBox').classList.remove('bg-red-500');
+                document.getElementById('errorBox').classList.add('bg-green-500');
+                setTimeout(() => {
+                    document.getElementById('errorBox').classList.add('hidden');
+                    document.getElementById('errorBox').classList.remove('bg-green-500');
+                    document.getElementById('errorBox').classList.add('bg-red-500');
+                }, 2000);
+
+            } catch (e) { showError(e.message); }
             setLoading(false);
         }
 
-        function setStatus(state, text) {
-            const dot = document.getElementById('statusDot');
-            const txt = document.getElementById('statusText');
-            const badge = document.getElementById('statusBadge');
-            txt.innerText = text;
-            
-            if (state === 'loading') { 
-                dot.className = "w-2 h-2 mr-2 rounded-full bg-yellow-400 animate-pulse";
-                badge.className = "flex items-center bg-yellow-100/80 backdrop-blur px-3 py-1.5 rounded-full text-xs font-semibold text-yellow-700 transition-all";
-            } else if (state === 'success') { 
-                dot.className = "w-2 h-2 mr-2 rounded-full bg-green-500";
-                badge.className = "flex items-center bg-green-100/80 backdrop-blur px-3 py-1.5 rounded-full text-xs font-semibold text-green-700 transition-all";
-            } else if (state === 'error') {
-                 dot.className = "w-2 h-2 mr-2 rounded-full bg-red-500";
-                 badge.className = "flex items-center bg-red-100/80 backdrop-blur px-3 py-1.5 rounded-full text-xs font-semibold text-red-700 transition-all";
-            } else { 
-                dot.className = "w-2 h-2 mr-2 rounded-full bg-gray-400";
-                badge.className = "flex items-center bg-gray-200/80 backdrop-blur px-3 py-1.5 rounded-full text-xs font-semibold text-gray-600 transition-all";
-            }
-        }
-
-        function showError(title, msg) {
-            document.getElementById('errorBox').classList.remove('hidden');
-            document.getElementById('errorTitle').innerText = title;
-            document.getElementById('errorMsg').innerText = msg;
-        }
-        function hideError() { document.getElementById('errorBox').classList.add('hidden'); }
-        function setLoading(isLoading) {
-            const overlay = document.getElementById('loadingOverlay');
-            if(isLoading) overlay.classList.remove('hidden');
-            else overlay.classList.add('hidden');
-        }
-
+        // --- 辅助功能 ---
+        function showHistoryModal() { renderHistoryModal(); document.getElementById('historyModal').classList.remove('hidden'); }
         function openSettings() { document.getElementById('settingsModal').classList.remove('hidden'); }
-        function closeSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
         function saveSettings() {
-            const user = document.getElementById('cfgUser').value.trim();
-            const repo = document.getElementById('cfgRepo').value.trim();
-            const token = document.getElementById('cfgToken').value.trim();
-            if(user && repo && token) {
-                localStorage.setItem(CACHE_KEY, JSON.stringify({user, repo, token}));
-                location.reload();
-            }
+            const u=document.getElementById('cfgUser').value, r=document.getElementById('cfgRepo').value, t=document.getElementById('cfgToken').value;
+            if(u&&r&&t) { localStorage.setItem(CACHE_KEY, JSON.stringify({user:u, repo:r, token:t})); location.reload(); }
         }
-        
-        if (config) {
-            document.getElementById('cfgUser').value = config.user;
-            document.getElementById('cfgRepo').value = config.repo;
-            document.getElementById('cfgToken').value = config.token;
-        }
+        function showError(msg) { const b=document.getElementById('errorBox'); b.innerText=msg; b.classList.remove('hidden'); setTimeout(()=>b.classList.add('hidden'), 3000); }
+        function setLoading(b) { document.getElementById('loadingOverlay').classList[b?'remove':'add']('hidden'); }
+        if(config) { document.getElementById('cfgUser').value=config.user; document.getElementById('cfgRepo').value=config.repo; document.getElementById('cfgToken').value=config.token; }
 
         init();
     </script>
