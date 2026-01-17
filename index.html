@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>CML 康复助手</title>
+    <title>老婆万岁</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
@@ -18,7 +18,6 @@
         .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 16px; }
         .spinner { border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid white; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .dot-status { width: 8px; height: 8px; border-radius: 50%; }
     </style>
     <script>dayjs.locale('zh-cn');</script>
 </head>
@@ -26,9 +25,9 @@
 
     <div class="mt-4 mb-5 flex justify-between items-center px-1">
         <div>
-            <div class="flex items-center gap-2 mb-0.5">
-                <div id="ghStatusDot" class="w-2.5 h-2.5 rounded-full bg-orange-400 shadow-sm animate-pulse"></div>
-                <p class="text-xs text-gray-400 font-bold uppercase tracking-wider" id="ghStatusText">CONNECTING...</p>
+            <div class="flex items-center gap-2 mb-1">
+                <div id="ghStatusDot" class="w-2 h-2 rounded-full bg-gray-300 transition-colors duration-500"></div>
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider" id="realTimeClock">Loading...</p>
             </div>
             <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">健康摘要</h1>
         </div>
@@ -100,8 +99,7 @@
             <h3 class="text-sm font-bold text-gray-800">近 7 天概况</h3>
             <button onclick="showHistoryModal()" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md">详细</button>
         </div>
-        <div class="flex justify-between" id="weekHistory">
-            </div>
+        <div class="flex justify-between" id="weekHistory"></div>
     </div>
 
     <div class="card shadow-apple p-4 mb-3">
@@ -127,7 +125,9 @@
         <div class="text-amber-500 text-lg">💡</div>
         <div class="text-xs text-gray-600 leading-relaxed">
             <span class="font-bold text-gray-800">医嘱：</span>
-            每次服药需空腹（餐后2小时，服药后1小时禁食）。
+            <p>每次服药需空腹（餐后2小时，服药后1小时禁食）。</p>
+            <p>每次服药需空腹（餐后2小时，服药后1小时禁食）。</p>
+            <p>每次服药需空腹（餐后2小时，服药后1小时禁食）。</p>
         </div>
     </div>
 
@@ -204,31 +204,37 @@
     <div id="errorBox" class="hidden fixed top-20 left-4 right-4 bg-red-500 text-white p-3 rounded-xl shadow-xl z-[60] text-sm font-bold text-center transition-all"></div>
 
     <script>
-        const CACHE_KEY = 'cml_config_v6';
+        const CACHE_KEY = 'cml_config_v7';
         let config = JSON.parse(localStorage.getItem(CACHE_KEY));
         let appData = { tixing: null, chiyao: [], tijian: [] };
         let shas = {};
 
-        // --- Github Status UI Helper ---
+        // --- Clock & Status Helper ---
+        function startClock() {
+            const update = () => {
+                const now = dayjs();
+                document.getElementById('realTimeClock').innerText = now.format('M月D日 dddd HH:mm:ss');
+            };
+            update();
+            setInterval(update, 1000);
+        }
+
         function setGhStatus(status) {
             const dot = document.getElementById('ghStatusDot');
-            const txt = document.getElementById('ghStatusText');
+            // Remove old classes
+            dot.className = "w-2 h-2 rounded-full transition-colors duration-500";
+            
             if (status === 'success') {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm";
-                txt.innerText = "Github OK";
-                txt.className = "text-xs text-green-600 font-bold uppercase tracking-wider";
+                dot.classList.add('bg-green-500', 'shadow-[0_0_8px_rgba(34,197,94,0.6)]');
             } else if (status === 'error') {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm";
-                txt.innerText = "Offline";
-                txt.className = "text-xs text-red-500 font-bold uppercase tracking-wider";
+                dot.classList.add('bg-red-500');
             } else {
-                dot.className = "w-2.5 h-2.5 rounded-full bg-orange-400 shadow-sm animate-pulse";
-                txt.innerText = "Connecting...";
-                txt.className = "text-xs text-orange-400 font-bold uppercase tracking-wider";
+                dot.classList.add('bg-orange-400', 'animate-pulse');
             }
         }
 
         async function init() {
+            startClock();
             setGhStatus('loading');
             if (!config) { openSettings(); return; }
             
@@ -282,16 +288,14 @@
                     appData.chiyao.push(log);
                 }
 
-                // 防止重复点击导致重复扣库存
                 if ((type === 'am' && log.taken_am) || (type === 'pm' && log.taken_pm)) {
                     setLoading(false); return; 
                 }
 
-                // 标记状态
                 if (type === 'am') { log.taken_am = true; log.time_am = dayjs().format('HH:mm'); }
                 if (type === 'pm') { log.taken_pm = true; log.time_pm = dayjs().format('HH:mm'); }
 
-                // 核心修复：每次点击都扣除 single_dose (2粒)
+                // Stock deduction logic
                 const dose = appData.tixing.single_dose || 2; 
                 appData.tixing.total_pills = Math.max(0, appData.tixing.total_pills - dose);
 
@@ -317,7 +321,7 @@
             const today = dayjs().format('YYYY-MM-DD');
             const log = appData.chiyao.find(l => l.date === today) || {};
 
-            // 药卡
+            // Med Card
             const updateBtn = (type, taken, time) => {
                 const cap = type.charAt(0).toUpperCase() + type.slice(1);
                 const el = document.getElementById(`check${cap}`);
@@ -332,16 +336,14 @@
             if(log.taken_am && log.taken_pm) card.className = "card shadow-apple bg-gradient-to-br from-emerald-500 to-green-500 text-white relative overflow-hidden transition-all duration-500";
             else card.className = "card shadow-apple bg-gradient-to-br from-blue-500 to-indigo-600 text-white relative overflow-hidden transition-all duration-500";
 
-            // 饮水 & 库存
+            // Stock & Water
             document.getElementById('waterCount').innerText = log.water_count || 0;
-            
             const stock = appData.tixing.total_pills;
-            const maxStock = 240; // 固定最大值
+            const maxStock = 240; 
             document.getElementById('stockCount').innerText = stock;
             const pct = Math.min(100, (stock / maxStock) * 100);
             document.getElementById('stockBar').style.width = `${pct}%`;
-            
-            // 复查
+
             const daysLeft = dayjs(appData.tixing.next_visit_date).diff(dayjs(), 'day');
             document.getElementById('daysUntil').innerText = Math.max(0, daysLeft);
             document.getElementById('visitDate').innerText = dayjs(appData.tixing.next_visit_date).format('MM/DD');
@@ -362,11 +364,7 @@
                 
                 const div = document.createElement('div');
                 div.className = 'flex flex-col items-center gap-1';
-                div.innerHTML = `
-                    <span class="text-[10px] text-gray-400 font-bold">${d.format('DD')}</span>
-                    <div class="${dot(log?.taken_am)}"></div>
-                    <div class="${dot(log?.taken_pm)}"></div>
-                `;
+                div.innerHTML = `<span class="text-[10px] text-gray-400 font-bold">${d.format('DD')}</span><div class="${dot(log?.taken_am)}"></div><div class="${dot(log?.taken_pm)}"></div>`;
                 container.appendChild(div);
             }
         }
@@ -375,7 +373,7 @@
             const data = [...appData.tijian].sort((a,b)=>dayjs(a.date).diff(dayjs(b.date)));
             const labels = data.map(d=>dayjs(d.date).format('MM/DD'));
 
-            // Chart BCR
+            // BCR
             const ctxBcr = document.getElementById('chartBcr').getContext('2d');
             new Chart(ctxBcr, {
                 type: 'line',
@@ -383,7 +381,7 @@
                 options: { responsive:true, maintainAspectRatio:false, scales:{ y:{type:'logarithmic', grid:{borderDash:[4,4]}}, x:{grid:{display:false}} }, plugins:{legend:{display:false}} }
             });
 
-            // Chart Blood
+            // Blood
             const ctxBlood = document.getElementById('chartBlood').getContext('2d');
             new Chart(ctxBlood, {
                 type: 'line',
@@ -411,7 +409,6 @@
             document.getElementById('historyModal').classList.remove('hidden');
         }
 
-        // --- Entry & Settings ---
         function openEntryModal() {
             document.getElementById('entryModal').classList.remove('hidden');
             document.getElementById('inDate').value = dayjs().format('YYYY-MM-DD');
@@ -442,7 +439,6 @@
             const u=document.getElementById('cfgUser').value, r=document.getElementById('cfgRepo').value, t=document.getElementById('cfgToken').value;
             if(u&&r&&t) { localStorage.setItem(CACHE_KEY, JSON.stringify({user:u, repo:r, token:t})); location.reload(); }
         }
-        
         function showError(msg) { const b=document.getElementById('errorBox'); b.innerText=msg; b.classList.remove('hidden'); setTimeout(()=>b.classList.add('hidden'),3000); }
         function setLoading(b) { document.getElementById('loadingOverlay').classList[b?'remove':'add']('hidden'); }
         if(config) { document.getElementById('cfgUser').value=config.user; document.getElementById('cfgRepo').value=config.repo; document.getElementById('cfgToken').value=config.token; }
