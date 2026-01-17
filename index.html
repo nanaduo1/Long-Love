@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CML 云端健康监测</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; }
+        .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="p-4 max-w-md mx-auto pb-24">
+
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-xl font-bold text-gray-800">CML 云端记录</h1>
+            <p class="text-xs text-gray-400" id="syncStatus">等待同步...</p>
+        </div>
+        <button onclick="openSettings()" class="text-blue-500 text-sm font-bold bg-blue-50 px-3 py-1 rounded-full">⚙️ 设置</button>
+    </div>
+
+    <div class="card text-center relative">
+        <div id="loadingOverlay" class="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10 hidden"><div class="spinner"></div></div>
+        
+        <h3 class="text-gray-500 text-sm mb-2" id="currentDateDisp">--</h3>
+        
+        <div id="medUnchecked">
+            <button onclick="handleCheckIn()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-xl text-xl font-bold shadow-lg shadow-blue-500/30 transition-transform active:scale-95">
+                💊 确认服药
+            </button>
+        </div>
+        
+        <div id="medChecked" class="hidden">
+            <div class="text-green-500 text-5xl mb-2">✔️</div>
+            <p class="font-bold text-gray-800">今日已服药</p>
+            <p class="text-xs text-gray-400 mt-1" id="checkInTimeDisp"></p>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-gray-100">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm text-gray-600">💧 今日饮水</span>
+                <span class="text-sm font-bold text-blue-600"><span id="waterCount">0</span> / <span id="waterTarget">8</span> 杯</span>
+            </div>
+            <div class="flex justify-center space-x-4">
+                <button onclick="updateWater(-1)" class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 font-bold text-xl">-</button>
+                <button onclick="updateWater(1)" class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 font-bold text-xl">+</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="card mb-0 flex flex-col justify-between">
+            <p class="text-xs text-gray-400">药物库存</p>
+            <div class="my-2">
+                <span class="text-2xl font-bold text-gray-800" id="pillsStock">--</span>
+                <span class="text-xs text-gray-500">粒</span>
+            </div>
+            <p class="text-xs text-gray-400" id="pillsDaysLeft">可用 -- 天</p>
+        </div>
+        <div class="card mb-0 flex flex-col justify-between">
+            <p class="text-xs text-gray-400">距离复查</p>
+            <div class="my-2">
+                <span class="text-2xl font-bold text-gray-800" id="daysUntilVisit">--</span>
+                <span class="text-xs text-gray-500">天</span>
+            </div>
+            <p class="text-xs text-gray-400" id="visitDateDisp">--</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-700">BCR-ABL (IS%)</h3>
+            <button onclick="addTijianData()" class="text-xs bg-gray-100 px-2 py-1 rounded text-blue-500">+ 录入新数据</button>
+        </div>
+        <canvas id="chartBcr" height="200"></canvas>
+    </div>
+
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-xl p-6">
+            <h2 class="text-xl font-bold mb-4">连接 Github</h2>
+            <p class="text-xs text-gray-500 mb-4">为了保护隐私，Token 仅保存在你的手机浏览器中。</p>
+            
+            <label class="block text-xs font-bold text-gray-600 mb-1">Github 用户名</label>
+            <input type="text" id="cfgUser" class="w-full border rounded p-2 mb-3 bg-gray-50">
+            
+            <label class="block text-xs font-bold text-gray-600 mb-1">仓库名称 (Repository)</label>
+            <input type="text" id="cfgRepo" class="w-full border rounded p-2 mb-3 bg-gray-50" placeholder="例如: cml-tracker">
+            
+            <label class="block text-xs font-bold text-gray-600 mb-1">Personal Access Token</label>
+            <input type="password" id="cfgToken" class="w-full border rounded p-2 mb-4 bg-gray-50" placeholder="ghp_xxxx...">
+            
+            <button onclick="saveSettings()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold">保存并同步</button>
+            <button onclick="document.getElementById('settingsModal').classList.add('hidden')" class="w-full mt-2 text-gray-400 py-2 text-sm">取消</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 全局变量 ---
+        let githubConfig = JSON.parse(localStorage.getItem('gh_config')) || null;
+        let appData = {
+            tixing: {},
+            chiyao: [],
+            tijian: []
+        };
+        let shaCache = {}; // 用于更新文件时必须的 SHA 校验码
+
+        // --- 初始化 ---
+        async function init() {
+            document.getElementById('currentDateDisp').innerText = dayjs().format('YYYY年M月D日');
+            
+            if (!githubConfig) {
+                openSettings();
+                return;
+            }
+
+            updateSyncStatus('正在从 Github 拉取数据...', 'text-blue-500');
+            try {
+                // 并行加载三个文件
+                await Promise.all([
+                    fetchFile('tixing.json', 'tixing'),
+                    fetchFile('chiyao.json', 'chiyao'),
+                    fetchFile('tijian.json', 'tijian')
+                ]);
+                updateSyncStatus('数据已同步', 'text-green-500');
+                renderAll();
+            } catch (e) {
+                console.error(e);
+                updateSyncStatus('同步失败，请检查设置', 'text-red-500');
+            }
+        }
+
+        // --- Github API 交互 (核心) ---
+        async function fetchFile(filename, key) {
+            const url = `https://api.github.com/repos/${githubConfig.user}/${githubConfig.repo}/contents/${filename}`;
+            const res = await fetch(url, {
+                headers: { 
+                    'Authorization': `token ${githubConfig.token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            if (!res.ok) throw new Error(`Fetch ${filename} failed`);
+            
+            const json = await res.json();
+            shaCache[filename] = json.sha; // 保存 SHA 用于下次更新
+            
+            // Github 返回的内容是 Base64 编码的，需要解码
+            // 使用 decodeURIComponent(escape(atob(...))) 解决中文乱码问题
+            const content = decodeURIComponent(escape(window.atob(json.content)));
+            appData[key] = JSON.parse(content);
+        }
+
+        async function updateFile(filename, contentObj) {
+            updateSyncStatus('正在保存...', 'text-blue-500');
+            const url = `https://api.github.com/repos/${githubConfig.user}/${githubConfig.repo}/contents/${filename}`;
+            
+            // 编码内容
+            const contentStr = JSON.stringify(contentObj, null, 2);
+            const contentBase64 = window.btoa(unescape(encodeURIComponent(contentStr)));
+
+            const body = {
+                message: `Update ${filename} via WebApp`,
+                content: contentBase64,
+                sha: shaCache[filename] // 必须提供上一次的 SHA
+            };
+
+            const res = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${githubConfig.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                updateSyncStatus('保存失败!', 'text-red-500');
+                throw new Error('Update failed');
+            }
+
+            const resJson = await res.json();
+            shaCache[filename] = resJson.content.sha; // 更新 SHA
+            updateSyncStatus('保存成功', 'text-green-500');
+        }
+
+        // --- 业务逻辑 ---
+
+        function renderAll() {
+            renderMedication();
+            renderReminders();
+            renderChart();
+        }
+
+        // 1. 吃药与饮水
+        function renderMedication() {
+            const today = dayjs().format('YYYY-MM-DD');
+            const todayLog = appData.chiyao.find(l => l.date === today);
+
+            // 吃药状态
+            if (todayLog && todayLog.taken) {
+                document.getElementById('medUnchecked').classList.add('hidden');
+                document.getElementById('medChecked').classList.remove('hidden');
+                document.getElementById('checkInTimeDisp').innerText = `时间: ${todayLog.time}`;
+            } else {
+                document.getElementById('medUnchecked').classList.remove('hidden');
+                document.getElementById('medChecked').classList.add('hidden');
+            }
+
+            // 饮水状态
+            const count = todayLog ? (todayLog.water_count || 0) : 0;
+            document.getElementById('waterCount').innerText = count;
+            document.getElementById('waterTarget').innerText = appData.tixing.water_target || 8;
+        }
+
+        async function handleCheckIn() {
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            const today = dayjs().format('YYYY-MM-DD');
+            let todayLog = appData.chiyao.find(l => l.date === today);
+
+            if (!todayLog) {
+                todayLog = { date: today, taken: true, time: dayjs().format('HH:mm'), water_count: 0 };
+                appData.chiyao.push(todayLog);
+            } else {
+                todayLog.taken = true;
+                todayLog.time = dayjs().format('HH:mm');
+            }
+            
+            // 扣减库存
+            appData.tixing.total_pills -= appData.tixing.daily_dose;
+
+            // 并行更新两个文件
+            await Promise.all([
+                updateFile('chiyao.json', appData.chiyao),
+                updateFile('tixing.json', appData.tixing)
+            ]);
+
+            renderAll();
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        async function updateWater(delta) {
+            const today = dayjs().format('YYYY-MM-DD');
+            let todayLog = appData.chiyao.find(l => l.date === today);
+            
+            if (!todayLog) {
+                // 如果今天还没记录，先创建记录
+                todayLog = { date: today, taken: false, time: "", water_count: 0 };
+                appData.chiyao.push(todayLog);
+            }
+
+            let newCount = (todayLog.water_count || 0) + delta;
+            if (newCount < 0) newCount = 0;
+            todayLog.water_count = newCount;
+            
+            document.getElementById('waterCount').innerText = newCount; // 立即更新UI响应
+            
+            // 异步保存，不阻塞UI
+            updateSyncStatus('正在同步饮水记录...', 'text-blue-500');
+            await updateFile('chiyao.json', appData.chiyao);
+        }
+
+        // 2. 提醒
+        function renderReminders() {
+            const t = appData.tixing;
+            document.getElementById('pillsStock').innerText = t.total_pills;
+            
+            const daysLeft = Math.floor(t.total_pills / t.daily_dose);
+            document.getElementById('pillsDaysLeft').innerText = `可用 ${daysLeft} 天`;
+            if (daysLeft < 7) document.getElementById('pillsStock').classList.add('text-red-500');
+
+            const nextVisit = dayjs(t.next_visit_date);
+            const diff = nextVisit.diff(dayjs(), 'day');
+            document.getElementById('daysUntilVisit').innerText = diff;
+            document.getElementById('visitDateDisp').innerText = `目标: ${t.next_visit_date}`;
+        }
+
+        // 3. 图表
+        function renderChart() {
+            const ctx = document.getElementById('chartBcr').getContext('2d');
+            // 按日期排序
+            const sortedData = appData.tijian.sort((a,b) => dayjs(a.date).diff(dayjs(b.date)));
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedData.map(d => d.date),
+                    datasets: [{
+                        label: 'BCR-ABL %',
+                        data: sortedData.map(d => d.bcr_abl),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { 
+                            type: 'logarithmic',
+                            title: { display: true, text: '对数坐标' }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function addTijianData() {
+            const date = prompt("输入体检日期 (YYYY-MM-DD):", dayjs().format('YYYY-MM-DD'));
+            if(!date) return;
+            const bcr = prompt("输入 BCR-ABL 数值 (%):");
+            if(!bcr) return;
+            
+            appData.tijian.push({
+                date: date,
+                bcr_abl: parseFloat(bcr),
+                wbc: 0, plt: 0, hgb: 0, weight: 0 // 简化录入，后续可完善
+            });
+            
+            await updateFile('tijian.json', appData.tijian);
+            renderAll();
+        }
+
+        // --- 设置相关 ---
+        function openSettings() {
+            if(githubConfig) {
+                document.getElementById('cfgUser').value = githubConfig.user;
+                document.getElementById('cfgRepo').value = githubConfig.repo;
+                document.getElementById('cfgToken').value = githubConfig.token;
+            }
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+
+        function saveSettings() {
+            const user = document.getElementById('cfgUser').value.trim();
+            const repo = document.getElementById('cfgRepo').value.trim();
+            const token = document.getElementById('cfgToken').value.trim();
+            
+            if(!user || !repo || !token) {
+                alert("请填写完整信息");
+                return;
+            }
+
+            githubConfig = { user, repo, token };
+            localStorage.setItem('gh_config', JSON.stringify(githubConfig));
+            document.getElementById('settingsModal').classList.add('hidden');
+            location.reload(); // 刷新页面以应用新设置
+        }
+
+        function updateSyncStatus(msg, colorClass) {
+            const el = document.getElementById('syncStatus');
+            el.innerText = msg;
+            el.className = `text-xs ${colorClass}`;
+        }
+
+        init();
+    </script>
+</body>
+</html>
