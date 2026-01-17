@@ -1,7 +1,10 @@
-{
-  "drug_name": "尼洛替尼",
-  "total_pills": 118,
-  "daily_dose": 2,
-  "next_visit_date": "2026-03-10",
-  "water_target": 8
-}
+[
+  {
+    "date": "2025-12-10",
+    "bcr_abl": 0.045,
+    "wbc": 4.8,
+    "plt": 210,
+    "hgb": 135,
+    "weight": 65.5
+  }
+]
