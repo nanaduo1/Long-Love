@@ -2,160 +2,235 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CML 健康监测 Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Lia 爱心提醒</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/zh-cn.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; }
-        .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
+        /* Apple 全局风格设定 */
+        :root { --apple-gray: #F2F2F7; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif; 
+            background-color: var(--apple-gray); 
+            color: #1c1c1e;
+            padding-bottom: 40px;
+        }
+        /* 定制柔和阴影 */
+        .card-shadow { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04); }
+        /* 卡片基础样式 */
+        .card { background: white; border-radius: 24px; padding: 24px; margin-bottom: 20px; }
+        /* 加载圈 */
+        .spinner-white { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .chart-container { position: relative; height: 220px; width: 100%; }
+        .chart-container { position: relative; height: 200px; width: 100%; }
+        /* 隐藏滚动条但允许滚动 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
+    <script>
+        dayjs.locale('zh-cn'); // 设置日期为中文
+        // 自定义 Tailwind 配置以支持特定的蒂芙尼蓝
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { tiffany: { 400: '#81D8D0', 500: '#4deadd' } }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="p-4 max-w-md mx-auto pb-24">
+<body class="p-5 max-w-md mx-auto">
 
-    <div class="flex justify-between items-center mb-6">
+    <div class="mt-8 mb-6 flex justify-between items-end">
         <div>
-            <h1 class="text-xl font-bold text-gray-800">CML 健康监测</h1>
-            <div id="statusBadge" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 mt-1">
-                <span class="w-2 h-2 mr-1.5 rounded-full bg-gray-400" id="statusDot"></span>
+            <p class="text-sm text-gray-500 font-medium mb-1" id="todayDate">加载中...</p>
+            <h1 class="text-4xl font-extrabold tracking-tight text-gray-900">摘要</h1>
+        </div>
+        <div class="flex items-center space-x-3">
+             <div id="statusBadge" class="flex items-center bg-gray-200/80 backdrop-blur px-3 py-1.5 rounded-full text-xs font-semibold text-gray-600 transition-all">
+                <span class="w-2 h-2 mr-2 rounded-full bg-gray-400" id="statusDot"></span>
                 <span id="statusText">未连接</span>
             </div>
-        </div>
-        <button onclick="openSettings()" class="text-blue-500 text-sm font-bold bg-white px-3 py-2 rounded-lg shadow-sm">⚙️ 设置</button>
-    </div>
-
-    <div id="errorBox" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-r">
-        <div class="flex">
-            <div class="flex-shrink-0">⚠️</div>
-            <div class="ml-3">
-                <p class="text-sm text-red-700 font-bold" id="errorTitle">出错了</p>
-                <p class="text-xs text-red-600 mt-1" id="errorMsg">详细信息...</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="card text-center relative overflow-hidden">
-        <div id="loadingOverlay" class="absolute inset-0 bg-white/80 flex items-center justify-center z-10 hidden"><div class="spinner"></div></div>
-        
-        <h3 class="text-gray-400 text-sm mb-4" id="todayDate">--月--日</h3>
-        
-        <div id="actionArea">
-            <button onclick="handleCheckIn()" id="btnCheckIn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-xl text-xl font-bold shadow-lg shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                💊 确认服药
+            <button onclick="openSettings()" class="bg-gray-200/80 backdrop-blur p-2 rounded-full text-gray-600 hover:bg-gray-300 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                  <path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 000 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.819l1.019-.393c.115-.044.283-.032.45.083a7.49 7.49 0 00.986.57c.182.088.277.228.297.348l.177 1.072c.151.904.933 1.567 1.85 1.567h1.844c.917 0 1.699-.663 1.85-1.567l.177-1.072c.02-.12.115-.26.297-.348.325-.157.65-.332.986-.57.166-.115.334-.126.45-.083l1.019.393a1.875 1.875 0 002.282-.819l.922-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 000-1.139c-.015-.2.059-.352.153-.43l.841-.692a1.875 1.875 0 00.432-2.385l-.922-1.597a1.875 1.875 0 00-2.282-.819l-1.019.393c-.115.044-.283.032-.45-.083a7.49 7.49 0 00-.986-.57c-.182-.088-.277-.228-.297-.348l-.177-1.072c-.151-.904-.933-1.567-1.85-1.567h-1.844zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clip-rule="evenodd" />
+                </svg>
             </button>
         </div>
+    </div>
 
-        <div id="statusArea" class="hidden mt-2">
-            <p class="text-green-500 font-bold text-lg flex items-center justify-center gap-2">
-                <span class="text-2xl">✔️</span> 今日已服药
-            </p>
-            <p class="text-xs text-gray-400 mt-1" id="checkInTime">--:--</p>
-        </div>
-
-        <div class="mt-6 pt-4 border-t border-gray-100">
-            <div class="flex justify-between items-center mb-3">
-                <span class="text-sm font-medium text-gray-600">💧 每日饮水</span>
-                <span class="text-sm font-bold text-blue-600"><span id="waterCount">0</span> / <span id="waterTarget">8</span></span>
-            </div>
-            <div class="flex justify-center gap-6">
-                <button onclick="updateWater(-1)" class="w-12 h-12 rounded-full bg-gray-100 text-gray-500 text-xl font-bold hover:bg-gray-200">-</button>
-                <button onclick="updateWater(1)" class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 text-xl font-bold hover:bg-blue-200">+</button>
+    <div id="errorBox" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-2xl card-shadow mx-1">
+        <div class="flex">
+            <div class="flex-shrink-0 text-red-500">⚠️</div>
+            <div class="ml-3">
+                <p class="text-sm text-red-800 font-bold" id="errorTitle">出错了</p>
+                <p class="text-xs text-red-700 mt-1 font-medium" id="errorMsg">详细信息...</p>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-4 mb-4">
-        <div class="card mb-0 flex flex-col justify-between">
-            <p class="text-xs text-gray-400 font-bold uppercase">Medication</p>
-            <div class="mt-2">
-                <span class="text-2xl font-bold text-gray-800" id="stockCount">--</span>
-                <span class="text-xs text-gray-500">粒剩余</span>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-1.5 mt-2">
-                <div class="bg-blue-500 h-1.5 rounded-full" style="width: 100%" id="stockBar"></div>
-            </div>
+    <div id="medicationCard" class="card card-shadow relative overflow-hidden bg-gradient-to-br from-pink-500 to-purple-600 text-white transition-all duration-500 ease-in-out transform hover:scale-[1.01]">
+        
+        <div id="loadingOverlay" class="absolute inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-20 hidden transition-all">
+            <div class="spinner-white"></div>
         </div>
-        <div class="card mb-0 flex flex-col justify-between">
-            <p class="text-xs text-gray-400 font-bold uppercase">Next Visit</p>
-            <div class="mt-2">
-                <span class="text-2xl font-bold text-gray-800" id="daysUntil">--</span>
-                <span class="text-xs text-gray-500">天后复查</span>
+        
+        <div class="relative z-10">
+            <h2 class="text-lg font-bold opacity-90 mb-1">今日服药 & 饮水</h2>
+            <p class="text-sm opacity-75 font-medium mb-6">保持规律，稳定前行</p>
+            
+            <div id="actionArea">
+                <button onclick="handleCheckIn()" class="w-full bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 text-white py-5 rounded-3xl text-2xl font-bold shadow-sm transition-all active:scale-95 flex items-center justify-center space-x-3">
+                    <span class="text-3xl">💊</span>
+                    <span>确认服药</span>
+                </button>
             </div>
-            <p class="text-xs text-blue-500 font-medium mt-1" id="visitDate">--</p>
+
+            <div id="statusArea" class="hidden py-4 text-center">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-md rounded-full mb-3 shadow-inner border border-white/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-12 h-12">
+                      <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <p class="text-2xl font-bold">今日已完成</p>
+                <p class="text-sm opacity-80 mt-1 font-medium" id="checkInTime">--:--</p>
+            </div>
+
+            <div class="mt-8 pt-5 border-t border-white/20">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-base font-bold flex items-center"><span class="text-xl mr-2">💧</span> 今日饮水</span>
+                    <span class="text-xl font-bold"><span id="waterCount" class="text-2xl">0</span> <span class="opacity-70 text-base">/ <span id="waterTarget">8</span> 杯</span></span>
+                </div>
+                <div class="flex justify-center gap-4">
+                    <button onclick="updateWater(-1)" class="w-14 h-14 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur border border-white/30 text-white text-2xl font-medium transition flex items-center justify-center active:scale-95">-</button>
+                    <button onclick="updateWater(1)" class="w-14 h-14 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur border border-white/30 text-white text-2xl font-medium transition flex items-center justify-center active:scale-95">+</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="card">
-        <div class="flex justify-between items-end mb-4 border-b pb-2">
-            <h3 class="font-bold text-gray-700">BCR-ABL 基因趋势</h3>
-            <span class="text-xs text-gray-400">Log 对数轴</span>
+    <div class="grid grid-cols-2 gap-5 mb-6">
+        <div class="card card-shadow mb-0 flex flex-col justify-between p-5 transform transition hover:scale-[1.02]">
+            <div class="flex items-center space-x-2 mb-3">
+                 <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 100 13.5 6.75 6.75 0 000-13.5zM2.25 10.5a8.25 8.25 0 1114.59 5.28l4.69 4.69a.75.75 0 11-1.06 1.06l-4.69-4.69w-8.25 8.25 0 01-14.59-5.28z" clip-rule="evenodd" /></svg>
+                 </div>
+                <h3 class="text-base font-bold text-gray-900">药物库存</h3>
+            </div>
+            <div>
+                <div class="flex items-baseline">
+                    <span class="text-4xl font-extrabold text-gray-900 tracking-tight" id="stockCount">--</span>
+                    <span class="text-gray-500 font-bold ml-1">粒</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2 mt-4 overflow-hidden">
+                    <div class="bg-blue-500 h-full rounded-full transition-all duration-500" style="width: 0%" id="stockBar"></div>
+                </div>
+            </div>
+        </div>
+        <div class="card card-shadow mb-0 flex flex-col justify-between p-5 transform transition hover:scale-[1.02]">
+            <div class="flex items-center space-x-2 mb-3">
+                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M12.75 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM7.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM8.25 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.75 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM10.5 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12.75 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM14.25 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 17.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 15.75a.75.75 0 100-1.5.75.75 0 000 1.5zM15 12.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM16.5 13.5a.75.75 0 100-1.5.75.75 0 000 1.5z" /><path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0117.25 3v1.5h1.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-13.5A1.125 1.125 0 014 15.375v-9.75c0-.621.504-1.125 1.125-1.125H6.5V3a.75.75 0 01.75-.75zM6.75 18v-1.5h10.5V18a1.875 1.875 0 01-1.875 1.875h-6.75A1.875 1.875 0 016.75 18z" clip-rule="evenodd" /></svg>
+                </div>
+                <h3 class="text-base font-bold text-gray-900">距离复查</h3>
+            </div>
+            <div>
+                 <div class="flex items-baseline">
+                    <span class="text-4xl font-extrabold text-gray-900 tracking-tight" id="daysUntil">--</span>
+                    <span class="text-gray-500 font-bold ml-1">天</span>
+                </div>
+                <p class="text-sm text-indigo-600 font-bold mt-3 bg-indigo-50 inline-block px-3 py-1 rounded-lg" id="visitDate">目标: --</p>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="text-2xl font-bold text-gray-900 mb-5 px-1">趋势分析</h2>
+    
+    <div class="card card-shadow p-5">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">BCR-ABL (IS%)</h3>
+                <p class="text-sm text-gray-500 font-medium">融合基因监测 (对数坐标)</p>
+            </div>
         </div>
         <div class="chart-container">
             <canvas id="chartBcr"></canvas>
         </div>
     </div>
 
-    <div class="card">
-        <div class="flex justify-between items-end mb-4 border-b pb-2">
-            <h3 class="font-bold text-gray-700">血常规趋势</h3>
-            <span class="text-xs text-gray-400">WBC & PLT</span>
+    <div class="card card-shadow p-5">
+        <div class="flex justify-between items-center mb-6">
+             <div>
+                <h3 class="text-xl font-bold text-gray-900">血常规</h3>
+                <p class="text-sm text-gray-500 font-medium">白细胞 & 血小板</p>
+            </div>
         </div>
         <div class="chart-container">
             <canvas id="chartBlood"></canvas>
         </div>
     </div>
-    
-    <div class="text-center mb-8">
-         <button onclick="addTijianData()" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-full text-sm font-medium shadow-sm active:bg-gray-50">
-            ➕ 录入新化验单
+
+    <div class="text-center mb-10">
+         <button onclick="addTijianData()" class="bg-white hover:bg-gray-50 text-blue-600 px-6 py-3 rounded-full text-base font-bold shadow-md active:scale-95 transition flex items-center justify-center mx-auto space-x-2 border border-blue-100">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z" clip-rule="evenodd" /></svg>
+            <span>录入新化验单</span>
         </button>
     </div>
 
-    <div id="settingsModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl">
-            <h2 class="text-lg font-bold mb-4 text-gray-800">连接 Github 仓库</h2>
+    <div class="card card-shadow bg-amber-50/80 border border-amber-100/50 p-6 mb-8 backdrop-blur">
+        <div class="flex items-center space-x-2 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-amber-500"><path fill-rule="evenodd" d="M5.625 1.5H9a3.75 3.75 0 013.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 013.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 01-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875zM12.75 12a.75.75 0 00-1.5 0V9.75a.75.75 0 00-1.5 0V12a.75.75 0 00-1.5 0v2.25a.75.75 0 001.5 0V15a.75.75 0 001.5 0v-.75a.75.75 0 001.5 0v2.25a.75.75 0 001.5 0V12z" clip-rule="evenodd" /><path d="M14.25 5.25a.75.75 0 000 1.5h2.25a.75.75 0 000-1.5H14.25z" /></svg>
+            <h3 class="text-lg font-bold text-gray-900">重要医嘱与备注</h3>
+        </div>
+        <div class="text-gray-700 text-sm leading-relaxed font-medium space-y-2">
+            <p>• 务必每日定时服药，不可擅自停药或增减剂量。</p>
+            <p>• 服药前后2小时避免食用葡萄柚（西柚）及其制品。</p>
+            <p>• 若出现发热、出血点或严重疲劳，请及时就医。</p>
+            <p class="text-amber-600 text-xs pt-2">（此区域文字请在 index.html 底部手动编辑修改）</p>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-6 transition-opacity">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl scale-100 transition-transform">
+            <div class="flex justify-between items-center mb-6">
+                 <h2 class="text-2xl font-extrabold text-gray-900">连接数据仓库</h2>
+                 <button onclick="closeSettings()" class="text-gray-400 hover:text-gray-600"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6"><path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" /></svg></button>
+            </div>
             
-            <div class="space-y-3">
+            <div class="space-y-5">
                 <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Github Username</label>
-                    <input type="text" id="cfgUser" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-2 ml-1">Github Username</label>
+                    <input type="text" id="cfgUser" class="w-full bg-gray-100 border-none rounded-xl p-4 text-base font-bold text-gray-900 focus:ring-2 focus:ring-blue-500/50 outline-none transition">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Repository Name</label>
-                    <input type="text" id="cfgRepo" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. cml-tracker">
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-2 ml-1">Repository Name</label>
+                    <input type="text" id="cfgRepo" class="w-full bg-gray-100 border-none rounded-xl p-4 text-base font-bold text-gray-900 focus:ring-2 focus:ring-blue-500/50 outline-none transition" placeholder="e.g. cml-tracker">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Access Token (ghp_...)</label>
-                    <input type="password" id="cfgToken" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <label class="text-xs font-bold text-gray-500 uppercase block mb-2 ml-1">Access Token</label>
+                    <input type="password" id="cfgToken" class="w-full bg-gray-100 border-none rounded-xl p-4 text-base font-bold text-gray-900 focus:ring-2 focus:ring-blue-500/50 outline-none transition" placeholder="ghp_...">
                 </div>
             </div>
 
-            <div class="mt-6 flex gap-3">
-                <button onclick="closeSettings()" class="flex-1 py-2.5 text-gray-500 font-medium text-sm">取消</button>
-                <button onclick="saveSettings()" class="flex-1 bg-blue-600 text-white rounded-lg py-2.5 font-bold text-sm shadow-lg shadow-blue-500/30">保存连接</button>
-            </div>
+            <button onclick="saveSettings()" class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-4 font-bold text-lg shadow-lg shadow-blue-500/30 mt-8 transition active:scale-[0.98]">保存并同步</button>
             
-             <p class="text-[10px] text-gray-400 mt-4 text-center">数据仅存储在 Github，本网页不保存任何隐私。</p>
+             <p class="text-xs text-gray-400 mt-6 text-center font-medium leading-relaxed">Token 仅保存在本地浏览器用于访问 Github API。<br>本页面不收集任何个人隐私数据。</p>
         </div>
     </div>
 
     <script>
-        // --- 全局状态 ---
-        const CACHE_KEY = 'cml_gh_config_v2';
+        const CACHE_KEY = 'cml_gh_config_v3'; // 升级版本号清理旧缓存
         let config = JSON.parse(localStorage.getItem(CACHE_KEY));
         let appData = { tixing: null, chiyao: [], tijian: [] };
-        let shas = {}; // 关键：存储文件的 SHA 值，防止 409 冲突
+        let shas = {};
 
-        // --- 初始化 ---
         async function init() {
             document.getElementById('todayDate').innerText = dayjs().format('M月D日 dddd');
             
             if (!config) {
-                setStatus('setup', '请先设置');
+                setStatus('setup', '请先配置');
                 openSettings();
                 return;
             }
@@ -164,21 +239,19 @@
             hideError();
 
             try {
-                // 串行加载，确保逻辑清晰，方便报错定位
                 await loadFile('tixing.json', 'tixing');
                 await loadFile('chiyao.json', 'chiyao');
                 await loadFile('tijian.json', 'tijian');
                 
                 renderUI();
-                setStatus('success', '同步完成');
+                setStatus('success', '已连接');
             } catch (err) {
                 console.error(err);
                 setStatus('error', '同步失败');
-                showError('数据加载失败', err.message);
+                showError('无法加载数据', err.message + "。请检查网络或设置。");
             }
         }
 
-        // --- 核心网络层 (带详细错误处理) ---
         async function loadFile(filename, key) {
             const url = `https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`;
             const res = await fetch(url, {
@@ -186,34 +259,34 @@
                     'Authorization': `token ${config.token}`,
                     'Accept': 'application/vnd.github.v3+json'
                 },
-                cache: "no-store" // 强制不缓存
+                cache: "no-store"
             });
 
-            if (res.status === 404) throw new Error(`找不到文件: ${filename} (请检查仓库名或文件名)`);
-            if (res.status === 401) throw new Error(`Token 无效或权限不足`);
-            if (!res.ok) throw new Error(`网络错误: ${res.status}`);
+            if (res.status === 404) throw new Error(`找不到 ${filename}，请检查仓库中是否存在此文件`);
+            if (res.status === 401) throw new Error(`Token 错误或过期`);
+            if (!res.ok) throw new Error(`网络错误 (${res.status})`);
 
             const json = await res.json();
-            shas[filename] = json.sha; // 记下身份证
+            shas[filename] = json.sha;
 
             try {
-                // 解决中文乱码的终极方案
                 const rawContent = decodeURIComponent(escape(window.atob(json.content)));
                 appData[key] = JSON.parse(rawContent);
             } catch (parseErr) {
-                throw new Error(`文件 ${filename} 格式错误 (JSON 语法不对)`);
+                throw new Error(`${filename} 文件内容格式有误，请检查 JSON 语法`);
             }
         }
 
         async function saveFile(filename, contentObj) {
             const url = `https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`;
-            const contentStr = JSON.stringify(contentObj, null, 2); // 格式化美观
+            // 格式化 JSON 方便在 Github 查看
+            const contentStr = JSON.stringify(contentObj, null, 2); 
             const contentBase64 = window.btoa(unescape(encodeURIComponent(contentStr)));
 
             const body = {
-                message: `Update ${filename} via WebApp`,
+                message: `📱 App update ${filename} - ${dayjs().format('MM-DD HH:mm')}`,
                 content: contentBase64,
-                sha: shas[filename] // 必须带上旧身份证
+                sha: shas[filename]
             };
 
             const res = await fetch(url, {
@@ -225,14 +298,13 @@
                 body: JSON.stringify(body)
             });
 
-            if (res.status === 409) throw new Error("数据冲突 (409)，请刷新页面重试");
-            if (!res.ok) throw new Error(`保存失败: ${res.status}`);
+            if (res.status === 409) throw new Error("数据版本冲突，请刷新页面后重试");
+            if (!res.ok) throw new Error(`保存失败 (${res.status})`);
 
             const resJson = await res.json();
-            shas[filename] = resJson.content.sha; // 更新身份证
+            shas[filename] = resJson.content.sha;
         }
 
-        // --- 界面渲染逻辑 ---
         function renderUI() {
             renderMedication();
             renderDashboard();
@@ -241,16 +313,24 @@
 
         function renderMedication() {
             const today = dayjs().format('YYYY-MM-DD');
-            // 安全检查：如果 chiyao.json 还没变成数组（比如手动改坏了），强制变回数组
             if (!Array.isArray(appData.chiyao)) appData.chiyao = [];
 
             const log = appData.chiyao.find(item => item.date === today);
+            const medCard = document.getElementById('medicationCard');
 
             if (log && log.taken) {
+                // 切换到绿色渐变 (Tiffany Blue)
+                medCard.classList.remove('from-pink-500', 'to-purple-600');
+                medCard.classList.add('from-tiffany-400', 'to-tiffany-500');
+                
                 document.getElementById('actionArea').classList.add('hidden');
                 document.getElementById('statusArea').classList.remove('hidden');
-                document.getElementById('checkInTime').innerText = `记录时间 ${log.time}`;
+                document.getElementById('checkInTime').innerText = `于 ${log.time} 完成`;
             } else {
+                // 切换回粉色渐变
+                medCard.classList.remove('from-tiffany-400', 'to-tiffany-500');
+                medCard.classList.add('from-pink-500', 'to-purple-600');
+
                 document.getElementById('actionArea').classList.remove('hidden');
                 document.getElementById('statusArea').classList.add('hidden');
             }
@@ -265,65 +345,77 @@
             const conf = appData.tixing;
             if (!conf) return;
 
-            // 药量
+            // 库存
             document.getElementById('stockCount').innerText = conf.total_pills;
-            const maxStock = 120; // 假设满瓶是120，用于进度条
+            const maxStock = 120; 
             const percent = Math.min(100, (conf.total_pills / maxStock) * 100);
-            document.getElementById('stockBar').style.width = `${percent}%`;
-            document.getElementById('stockBar').className = conf.total_pills < 14 
-                ? 'h-1.5 rounded-full bg-red-500' 
-                : 'h-1.5 rounded-full bg-blue-500';
+            const stockBar = document.getElementById('stockBar');
+            stockBar.style.width = `${percent}%`;
+            stockBar.className = conf.total_pills < 14 
+                ? 'h-full rounded-full bg-red-500 transition-all duration-500' 
+                : 'h-full rounded-full bg-blue-500 transition-all duration-500';
 
             // 复查
             const nextDate = dayjs(conf.next_visit_date);
             const diff = nextDate.diff(dayjs(), 'day');
-            document.getElementById('daysUntil').innerText = diff > 0 ? diff : 0;
-            document.getElementById('daysUntil').className = diff < 7 ? "text-2xl font-bold text-red-500" : "text-2xl font-bold text-gray-800";
-            document.getElementById('visitDate').innerText = nextDate.format('YYYY-MM-DD');
+            const daysUntilEl = document.getElementById('daysUntil');
+            daysUntilEl.innerText = diff > 0 ? diff : 0;
+            daysUntilEl.className = diff < 7 
+                ? "text-5xl font-extrabold text-red-500 tracking-tight" 
+                : "text-5xl font-extrabold text-gray-900 tracking-tight";
+            document.getElementById('visitDate').innerText = `目标: ${nextDate.format('MM月DD日')}`;
         }
 
-        // 3. 图表 (混合数据处理)
         let chartBcrInstance = null;
         let chartBloodInstance = null;
 
         function renderCharts() {
-            // 按日期排序
-            const sorted = [...appData.tijian].sort((a,b) => dayjs(a.date).diff(dayjs(b.date)));
-            const labels = sorted.map(d => dayjs(d.date).format('MM/DD'));
+            Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+            Chart.defaults.color = '#8e8e93';
+            Chart.defaults.scale.grid.color = '#e5e5ea';
 
-            // 销毁旧图表（防止重绘重叠）
+            const sorted = [...appData.tijian].sort((a,b) => dayjs(a.date).diff(dayjs(b.date)));
+            const labels = sorted.map(d => dayjs(d.date).format('M/D'));
+
             if (chartBcrInstance) chartBcrInstance.destroy();
             if (chartBloodInstance) chartBloodInstance.destroy();
 
-            // --- BCR-ABL 图表 ---
             const ctxBcr = document.getElementById('chartBcr').getContext('2d');
+            // 创建渐变背景
+            let bcrGradient = ctxBcr.createLinearGradient(0, 0, 0, 200);
+            bcrGradient.addColorStop(0, 'rgba(37, 99, 235, 0.2)');
+            bcrGradient.addColorStop(1, 'rgba(37, 99, 235, 0.0)');
+
             chartBcrInstance = new Chart(ctxBcr, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
                         label: 'BCR-ABL %',
-                        data: sorted.map(d => d.bcr_abl), // 如果没有这个字段，就是 undefined，图表会自动断开
+                        data: sorted.map(d => d.bcr_abl),
                         borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        backgroundColor: bcrGradient,
                         pointBackgroundColor: '#2563eb',
-                        borderWidth: 2,
-                        tension: 0.1,
-                        spanGaps: true // 允许连线跨过空数据
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true,
+                        spanGaps: true
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: { type: 'logarithmic', title: {display: false}, grid: {color: '#f0f0f0'} },
+                        y: { type: 'logarithmic', grid: { borderDash: [4, 4] } },
                         x: { grid: {display: false} }
                     },
-                    plugins: { legend: {display: false} }
+                    plugins: { legend: {display: false}, tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, cornerRadius: 8 } }
                 }
             });
 
-            // --- 血常规 图表 ---
             const ctxBlood = document.getElementById('chartBlood').getContext('2d');
             chartBloodInstance = new Chart(ctxBlood, {
                 type: 'line',
@@ -331,20 +423,18 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: '白细胞 (WBC)',
+                            label: '白细胞',
                             data: sorted.map(d => d.wbc),
-                            borderColor: '#059669', // Green
-                            backgroundColor: '#059669',
-                            yAxisID: 'y',
-                            tension: 0.3
+                            borderColor: '#34d399', backgroundColor: '#34d399',
+                            pointBackgroundColor: '#34d399', pointBorderColor: '#fff', pointBorderWidth: 2,
+                            yAxisID: 'y', tension: 0.3, borderWidth: 3
                         },
                         {
-                            label: '血小板 (PLT)',
+                            label: '血小板',
                             data: sorted.map(d => d.plt),
-                            borderColor: '#d97706', // Yellow
-                            backgroundColor: '#d97706',
-                            yAxisID: 'y1',
-                            tension: 0.3
+                            borderColor: '#fbbf24', backgroundColor: '#fbbf24',
+                             pointBackgroundColor: '#fbbf24', pointBorderColor: '#fff', pointBorderWidth: 2,
+                            yAxisID: 'y1', tension: 0.3, borderWidth: 3
                         }
                     ]
                 },
@@ -353,15 +443,15 @@
                     maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
                     scales: {
-                        y: { type: 'linear', position: 'left', title: {display: true, text: 'WBC'} },
-                        y1: { type: 'linear', position: 'right', grid: {drawOnChartArea: false}, title: {display: true, text: 'PLT'} },
+                        y: { position: 'left', grid: { borderDash: [4, 4] } },
+                        y1: { position: 'right', grid: {display: false} },
                         x: { grid: {display: false} }
-                    }
+                    },
+                     plugins: { tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, cornerRadius: 8 } }
                 }
             });
         }
 
-        // --- 交互操作 ---
         async function handleCheckIn() {
             setLoading(true);
             try {
@@ -393,42 +483,27 @@
         async function updateWater(delta) {
             const today = dayjs().format('YYYY-MM-DD');
             let log = appData.chiyao.find(l => l.date === today);
-            
-            // 如果还没打卡，先创建一个只有饮水记录的条目
             if (!log) {
                 log = { date: today, taken: false, time: "", water_count: 0 };
                 appData.chiyao.push(log);
             }
-
             let newVal = (log.water_count || 0) + delta;
             if (newVal < 0) newVal = 0;
             log.water_count = newVal;
-
-            // 乐观更新 UI (不等服务器)
             document.getElementById('waterCount').innerText = newVal;
-            
-            // 静默保存
-            try {
-                await saveFile('chiyao.json', appData.chiyao);
-            } catch (e) {
-                console.error("饮水保存失败", e);
-                // 失败了这里不做回滚提示，避免太打扰
-            }
+            try { await saveFile('chiyao.json', appData.chiyao); } catch (e) { console.error(e); }
         }
 
         async function addTijianData() {
             const date = prompt("日期 (YYYY-MM-DD):", dayjs().format('YYYY-MM-DD'));
             if (!date) return;
-            
             const wbc = prompt("白细胞 (WBC):", "");
             const bcr = prompt("融合基因 (BCR-ABL %): (没有就空着)", "");
             
             const newEntry = { date: date };
             if (wbc) newEntry.wbc = parseFloat(wbc);
             if (bcr) newEntry.bcr_abl = parseFloat(bcr);
-            // 补充其他字段避免图表错乱
-            newEntry.plt = null; 
-            newEntry.hgb = null;
+            newEntry.plt = null; newEntry.hgb = null;
 
             setLoading(true);
             try {
@@ -436,21 +511,30 @@
                 await saveFile('tijian.json', appData.tijian);
                 renderUI();
             } catch(e) {
-                showError('保存化验单失败', e.message);
+                showError('保存失败', e.message);
             }
             setLoading(false);
         }
 
-        // --- 辅助 UI 函数 ---
         function setStatus(state, text) {
             const dot = document.getElementById('statusDot');
             const txt = document.getElementById('statusText');
+            const badge = document.getElementById('statusBadge');
             txt.innerText = text;
             
-            if (state === 'loading') { dot.className = "w-2 h-2 mr-1.5 rounded-full bg-yellow-400 animate-pulse"; }
-            else if (state === 'success') { dot.className = "w-2 h-2 mr-1.5 rounded-full bg-green-500"; }
-            else if (state === 'error') { dot.className = "w-2 h-2 mr-1.5 rounded-full bg-red-500"; }
-            else { dot.className = "w-2 h-2 mr-1.5 rounded-full bg-gray-400"; }
+            if (state === 'loading') { 
+                dot.className = "w-2 h-2 mr-2 rounded-full bg-yellow-400 animate-pulse";
+                badge.className = "flex items-center bg-yellow-100/80 backdrop-blur px-3 py-1.5 rounded-full text-xs font-semibold text-yellow-700 transition-all";
+            } else if (state === 'success') { 
+                dot.className = "w-2 h-2 mr-2 rounded-full bg-green-500";
+                badge.className = "flex items-center bg-green-100/80 backdrop-blur px-3 py-1.5 rounded-full text-xs font-semibold text-green-700 transition-all";
+            } else if (state === 'error') {
+                 dot.className = "w-2 h-2 mr-2 rounded-full bg-red-500";
+                 badge.className = "flex items-center bg-red-100/80 backdrop-blur px-3 py-1.5 rounded-full text-xs font-semibold text-red-700 transition-all";
+            } else { 
+                dot.className = "w-2 h-2 mr-2 rounded-full bg-gray-400";
+                badge.className = "flex items-center bg-gray-200/80 backdrop-blur px-3 py-1.5 rounded-full text-xs font-semibold text-gray-600 transition-all";
+            }
         }
 
         function showError(title, msg) {
@@ -477,7 +561,6 @@
             }
         }
         
-        // 自动填充设置（如果已有）
         if (config) {
             document.getElementById('cfgUser').value = config.user;
             document.getElementById('cfgRepo').value = config.repo;
