@@ -104,19 +104,25 @@
 
     <div class="card shadow-apple p-4 mb-3">
         <div class="flex justify-between items-center mb-2">
-            <h3 class="text-sm font-bold text-gray-800">BCR-ABL %</h3>
-            <span class="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-bold">对数轴</span>
+            <div>
+                <h3 class="text-sm font-bold text-gray-800">BCR-ABL % (近1年)</h3>
+                <span class="text-[10px] text-gray-400">Log 对数轴 · 自动连线</span>
+            </div>
+            <button onclick="showLabHistory('bcr')" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md">详细</button>
         </div>
         <div style="height: 180px;"><canvas id="chartBcr"></canvas></div>
     </div>
 
     <div class="card shadow-apple p-4 mb-6">
         <div class="flex justify-between items-center mb-2">
-            <h3 class="text-sm font-bold text-gray-800">血常规趋势</h3>
-            <div class="flex gap-2">
-                <span class="text-[10px] flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>WBC</span>
-                <span class="text-[10px] flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span>PLT</span>
+            <div>
+                <h3 class="text-sm font-bold text-gray-800">血常规趋势 (近1年)</h3>
+                <div class="flex gap-2 mt-0.5">
+                    <span class="text-[10px] flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>WBC</span>
+                    <span class="text-[10px] flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>PLT</span>
+                </div>
             </div>
+            <button onclick="showLabHistory('blood')" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md">详细</button>
         </div>
         <div style="height: 180px;"><canvas id="chartBlood"></canvas></div>
     </div>
@@ -176,6 +182,30 @@
         </div>
     </div>
 
+    <div id="historyModal" class="fixed inset-0 bg-white z-50 hidden overflow-y-auto">
+        <div class="p-4 max-w-sm mx-auto">
+            <div class="flex justify-between items-center mb-6 mt-2">
+                <h2 class="text-xl font-bold">服药历史</h2>
+                <button onclick="document.getElementById('historyModal').classList.add('hidden')" class="bg-gray-100 p-2 rounded-full text-sm font-bold text-gray-600">关闭</button>
+            </div>
+            <div id="historyList" class="space-y-2 pb-20"></div>
+        </div>
+    </div>
+
+    <div id="labHistoryModal" class="fixed inset-0 bg-white z-50 hidden overflow-y-auto">
+        <div class="p-4 max-w-sm mx-auto">
+            <div class="flex justify-between items-center mb-6 mt-2">
+                <h2 class="text-xl font-bold" id="labHistoryTitle">化验记录</h2>
+                <button onclick="document.getElementById('labHistoryModal').classList.add('hidden')" class="bg-gray-100 p-2 rounded-full text-sm font-bold text-gray-600">关闭</button>
+            </div>
+            <div class="border-b border-gray-100 pb-2 mb-2 flex justify-between text-xs font-bold text-gray-400 px-2">
+                <span>日期</span>
+                <span id="labHistoryHeader">数值</span>
+            </div>
+            <div id="labHistoryList" class="space-y-2 pb-20"></div>
+        </div>
+    </div>
+
     <div id="settingsModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-6">
         <div class="bg-white w-full rounded-2xl p-6 shadow-2xl">
             <h2 class="text-lg font-bold mb-4">Github 连接</h2>
@@ -189,31 +219,16 @@
         </div>
     </div>
 
-    <div id="historyModal" class="fixed inset-0 bg-white z-50 hidden overflow-y-auto">
-        <div class="p-4 max-w-sm mx-auto">
-            <div class="flex justify-between items-center mb-6 mt-2">
-                <h2 class="text-xl font-bold">服药历史</h2>
-                <button onclick="document.getElementById('historyModal').classList.add('hidden')" class="bg-gray-100 p-2 rounded-full text-sm font-bold text-gray-600">关闭</button>
-            </div>
-            <div id="historyList" class="space-y-2 pb-20"></div>
-        </div>
-    </div>
-
     <div id="errorBox" class="hidden fixed top-20 left-4 right-4 bg-red-500 text-white p-3 rounded-xl shadow-xl z-[60] text-sm font-bold text-center transition-all"></div>
 
     <script>
-        const CACHE_KEY = 'cml_config_v9';
+        const CACHE_KEY = 'cml_config_v10';
         let config = JSON.parse(localStorage.getItem(CACHE_KEY));
         let appData = { tixing: null, chiyao: [], tijian: [] };
 
-        // --- Clock & Status Helper ---
         function startClock() {
-            const update = () => {
-                const now = dayjs();
-                document.getElementById('realTimeClock').innerText = now.format('M月D日 dddd HH:mm:ss');
-            };
-            update();
-            setInterval(update, 1000);
+            const update = () => { document.getElementById('realTimeClock').innerText = dayjs().format('M月D日 dddd HH:mm:ss'); };
+            update(); setInterval(update, 1000);
         }
 
         function setGhStatus(status) {
@@ -243,28 +258,25 @@
         }
 
         async function loadFile(filename, key) {
-            const url = `https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`;
-            const res = await fetch(url, { headers: { 'Authorization': `token ${config.token}`, 'Accept': 'application/vnd.github.v3+json' }, cache: "no-store" });
+            const res = await fetch(`https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`, {
+                headers: { 'Authorization': `token ${config.token}`, 'Accept': 'application/vnd.github.v3+json' }, cache: "no-store"
+            });
             if (!res.ok) throw new Error(filename + " " + res.status);
             const json = await res.json();
             appData[key] = JSON.parse(decodeURIComponent(escape(window.atob(json.content))));
         }
 
-        // Save with auto-fetch SHA
         async function saveFile(filename, contentObj) {
             const url = `https://api.github.com/repos/${config.user}/${config.repo}/contents/${filename}`;
-            // 1. Get latest SHA
             const getRes = await fetch(url, { headers: { 'Authorization': `token ${config.token}` }, cache: "no-store" });
             if(!getRes.ok) throw new Error(`无法获取 ${filename} 最新版本`);
             const getJson = await getRes.json();
-            const latestSha = getJson.sha;
-
-            // 2. Put
+            
             const contentBase64 = window.btoa(unescape(encodeURIComponent(JSON.stringify(contentObj, null, 2))));
             const res = await fetch(url, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${config.token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: `Update ${filename}`, content: contentBase64, sha: latestSha })
+                body: JSON.stringify({ message: `Update ${filename}`, content: contentBase64, sha: getJson.sha })
             });
             if (!res.ok) throw new Error("保存失败");
         }
@@ -275,13 +287,9 @@
                 const today = dayjs().format('YYYY-MM-DD');
                 if (!Array.isArray(appData.chiyao)) appData.chiyao = [];
                 let log = appData.chiyao.find(l => l.date === today);
-                if (!log) {
-                    log = { date: today, taken_am: false, time_am: "", taken_pm: false, time_pm: "", water_count: 0 };
-                    appData.chiyao.push(log);
-                }
+                if (!log) { log = { date: today, taken_am: false, time_am: "", taken_pm: false, time_pm: "", water_count: 0 }; appData.chiyao.push(log); }
 
                 if ((type === 'am' && log.taken_am) || (type === 'pm' && log.taken_pm)) { setLoading(false); return; }
-
                 if (type === 'am') { log.taken_am = true; log.time_am = dayjs().format('HH:mm'); }
                 if (type === 'pm') { log.taken_pm = true; log.time_pm = dayjs().format('HH:mm'); }
 
@@ -306,18 +314,15 @@
         function renderUI() {
             const today = dayjs().format('YYYY-MM-DD');
             const log = appData.chiyao.find(l => l.date === today) || {};
-
-            // Med Card
+            // Med
             const updateBtn = (type, taken, time) => {
                 const cap = type.charAt(0).toUpperCase() + type.slice(1);
                 const el = document.getElementById(`check${cap}`);
                 const tm = document.getElementById(`time${cap}`);
-                if(taken) { el.classList.remove('hidden'); el.classList.add('flex'); tm.innerText=time; }
-                else { el.classList.add('hidden'); el.classList.remove('flex'); tm.innerText=""; }
+                if(taken) { el.classList.remove('hidden'); el.classList.add('flex'); tm.innerText=time; } else { el.classList.add('hidden'); el.classList.remove('flex'); tm.innerText=""; }
             };
             updateBtn('am', log.taken_am, log.time_am);
             updateBtn('pm', log.taken_pm, log.time_pm);
-
             const card = document.getElementById('medCard');
             if(log.taken_am && log.taken_pm) card.className = "card shadow-apple bg-gradient-to-br from-emerald-500 to-green-500 text-white relative overflow-hidden transition-all duration-500";
             else card.className = "card shadow-apple bg-gradient-to-br from-blue-500 to-indigo-600 text-white relative overflow-hidden transition-all duration-500";
@@ -325,13 +330,9 @@
             // Stock
             document.getElementById('waterCount').innerText = log.water_count || 0;
             const stock = appData.tixing.total_pills;
-            const maxStock = 240; 
             document.getElementById('stockCount').innerText = stock;
-            const pct = Math.min(100, (stock / maxStock) * 100);
-            document.getElementById('stockBar').style.width = `${pct}%`;
-
-            const daysLeft = dayjs(appData.tixing.next_visit_date).diff(dayjs(), 'day');
-            document.getElementById('daysUntil').innerText = Math.max(0, daysLeft);
+            document.getElementById('stockBar').style.width = `${Math.min(100, (stock / 240) * 100)}%`;
+            document.getElementById('daysUntil').innerText = Math.max(0, dayjs(appData.tixing.next_visit_date).diff(dayjs(), 'day'));
             document.getElementById('visitDate').innerText = dayjs(appData.tixing.next_visit_date).format('MM/DD');
 
             renderWeekHistory();
@@ -346,38 +347,42 @@
                 const log = appData.chiyao.find(l=>l.date===d.format('YYYY-MM-DD'));
                 const isToday = i===0;
                 const dot = (taken) => `w-2 h-2 rounded-full ${taken ? 'bg-green-500' : (isToday ? 'bg-gray-200 border border-gray-300' : 'bg-red-400 opacity-30')}`;
-                const div = document.createElement('div');
-                div.className = 'flex flex-col items-center gap-1';
-                div.innerHTML = `<span class="text-[10px] text-gray-400 font-bold">${d.format('DD')}</span><div class="${dot(log?.taken_am)}"></div><div class="${dot(log?.taken_pm)}"></div>`;
-                container.appendChild(div);
+                container.innerHTML += `<div class="flex flex-col items-center gap-1"><span class="text-[10px] text-gray-400 font-bold">${d.format('DD')}</span><div class="${dot(log?.taken_am)}"></div><div class="${dot(log?.taken_pm)}"></div></div>`;
             }
         }
 
         function renderCharts() {
-            const data = [...appData.tijian].sort((a,b)=>dayjs(a.date).diff(dayjs(b.date)));
+            // Filter last 1 year data
+            const oneYearAgo = dayjs().subtract(1, 'year');
+            const data = [...appData.tijian]
+                .filter(d => dayjs(d.date).isAfter(oneYearAgo))
+                .sort((a,b)=>dayjs(a.date).diff(dayjs(b.date)));
+            
             const labels = data.map(d=>dayjs(d.date).format('MM/DD'));
 
-            // Chart BCR (Log fix)
+            // BCR Chart (Log fix + spanGaps)
             const bcrData = data.map(d => {
                 let val = parseFloat(d.bcr_abl);
                 if(isNaN(val)) return null;
                 return val <= 0 ? 0.0001 : val; 
             });
 
-            const ctxBcr = document.getElementById('chartBcr').getContext('2d');
-            new Chart(ctxBcr, {
+            new Chart(document.getElementById('chartBcr').getContext('2d'), {
                 type: 'line',
-                data: { labels, datasets: [{ label: 'BCR-ABL', data: bcrData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill:true, tension:0.3 }] },
+                data: { labels, datasets: [{ 
+                    label: 'BCR-ABL', data: bcrData, 
+                    borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', 
+                    fill:true, tension:0.3, spanGaps: true // <--- 关键修改：断点连线
+                }] },
                 options: { responsive:true, maintainAspectRatio:false, scales:{ y:{type:'logarithmic', grid:{borderDash:[4,4]}}, x:{grid:{display:false}} }, plugins:{legend:{display:false}} }
             });
 
-            // Chart Blood
-            const ctxBlood = document.getElementById('chartBlood').getContext('2d');
-            new Chart(ctxBlood, {
+            // Blood Chart
+            new Chart(document.getElementById('chartBlood').getContext('2d'), {
                 type: 'line',
                 data: { labels, datasets: [
-                    { label: 'WBC', data: data.map(d=>d.wbc), borderColor: '#10b981', tension:0.3, yAxisID:'y' },
-                    { label: 'PLT', data: data.map(d=>d.plt), borderColor: '#f59e0b', tension:0.3, yAxisID:'y1' }
+                    { label: 'WBC', data: data.map(d=>d.wbc), borderColor: '#10b981', tension:0.3, yAxisID:'y', spanGaps: true },
+                    { label: 'PLT', data: data.map(d=>d.plt), borderColor: '#f59e0b', tension:0.3, yAxisID:'y1', spanGaps: true }
                 ]},
                 options: { 
                     responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
@@ -387,29 +392,47 @@
             });
         }
 
-        // Updated History Modal to show exact time
+        // --- Modals ---
         function showHistoryModal() {
             const list = document.getElementById('historyList');
             list.innerHTML = '';
             appData.chiyao.slice().reverse().slice(0,60).forEach(l => {
-                const row = document.createElement('div');
-                row.className = "flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100 mb-2";
-                
                 const amTime = l.taken_am ? l.time_am : '未服';
                 const pmTime = l.taken_pm ? l.time_pm : '未服';
                 const amStyle = l.taken_am ? 'text-green-600 bg-green-50' : 'text-red-400 bg-red-50 opacity-60';
                 const pmStyle = l.taken_pm ? 'text-indigo-600 bg-indigo-50' : 'text-red-400 bg-red-50 opacity-60';
-
-                row.innerHTML = `
-                    <div class="font-bold text-gray-700 text-sm w-16">${dayjs(l.date).format('MM/DD')}</div>
-                    <div class="flex gap-2 flex-1 justify-end">
-                        <span class="text-xs px-2 py-1 rounded-md font-bold ${amStyle}">☀️ ${amTime}</span>
-                        <span class="text-xs px-2 py-1 rounded-md font-bold ${pmStyle}">🌙 ${pmTime}</span>
-                    </div>
-                `;
-                list.appendChild(row);
+                list.innerHTML += `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100 mb-2"><div class="font-bold text-gray-700 text-sm w-16">${dayjs(l.date).format('MM/DD')}</div><div class="flex gap-2 flex-1 justify-end"><span class="text-xs px-2 py-1 rounded-md font-bold ${amStyle}">☀️ ${amTime}</span><span class="text-xs px-2 py-1 rounded-md font-bold ${pmStyle}">🌙 ${pmTime}</span></div></div>`;
             });
             document.getElementById('historyModal').classList.remove('hidden');
+        }
+
+        function showLabHistory(type) {
+            const list = document.getElementById('labHistoryList');
+            const title = document.getElementById('labHistoryTitle');
+            const header = document.getElementById('labHistoryHeader');
+            list.innerHTML = '';
+            
+            // Show all data, newest first
+            const data = [...appData.tijian].sort((a,b)=>dayjs(b.date).diff(dayjs(a.date)));
+
+            if (type === 'bcr') {
+                title.innerText = "融合基因历史 (BCR-ABL)";
+                header.innerText = "结果 (%)";
+                data.forEach(d => {
+                    if (d.bcr_abl !== null && d.bcr_abl !== undefined) {
+                        list.innerHTML += `<div class="flex justify-between items-center p-3 bg-blue-50/50 rounded-xl border border-blue-100 mb-2"><span class="font-bold text-gray-700">${d.date}</span><span class="font-mono font-bold text-blue-600 text-lg">${d.bcr_abl}%</span></div>`;
+                    }
+                });
+            } else {
+                title.innerText = "血常规历史";
+                header.innerText = "WBC / PLT";
+                data.forEach(d => {
+                    if (d.wbc || d.plt) {
+                        list.innerHTML += `<div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100 mb-2"><span class="font-bold text-gray-700">${d.date}</span><div class="flex gap-3"><span class="text-emerald-600 font-bold">W: ${d.wbc||'-'}</span><span class="text-amber-500 font-bold">P: ${d.plt||'-'}</span></div></div>`;
+                    }
+                });
+            }
+            document.getElementById('labHistoryModal').classList.remove('hidden');
         }
 
         function openEntryModal() {
@@ -422,7 +445,7 @@
         
         async function saveEntryData() {
             const btn = document.getElementById('btnSave');
-            btn.innerText = "正在提交..."; btn.disabled = true;
+            btn.innerText = "提交中..."; btn.disabled = true;
             try {
                 const date = document.getElementById('inDate').value;
                 const wbc = document.getElementById('inWbc').value;
