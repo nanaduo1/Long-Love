@@ -87,7 +87,7 @@
             <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                 <div id="stockBar" class="bg-green-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
             </div>
-            <p class="text-[10px] text-gray-400 mt-1 text-right">总容量 240</p>
+            <p class="text-[10px] text-gray-400 mt-1 text-right">总容量 120</p>
         </div>
         <div class="card shadow-apple mb-0 p-4 flex flex-col justify-between">
             <span class="text-xs font-bold text-gray-400 uppercase">距离复查</span>
@@ -123,8 +123,8 @@
             <div>
                 <h3 class="text-sm font-bold text-gray-800">血常规趋势 (近1年)</h3>
                 <div class="flex gap-2 mt-0.5">
-                    <span class="text-[10px] flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>WBC 左侧数值</span>
-                    <span class="text-[10px] flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>PLT 右侧数值</span>
+                    <span class="text-[10px] flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>WBC 白细胞</span>
+                    <span class="text-[10px] flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>PLT 血小板</span>
                 </div>
             </div>
             <button onclick="showLabHistory('blood')" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md">详细</button>
@@ -364,7 +364,7 @@
             // 使用新的计算逻辑显示库存
             const calculatedStock = calculateStock();
             document.getElementById('stockCount').innerText = calculatedStock;
-            document.getElementById('stockBar').style.width = `${Math.min(100, (calculatedStock / 240) * 100)}%`;
+            document.getElementById('stockBar').style.width = `${Math.min(100, (calculatedStock / 120) * 100)}%`;
             
             document.getElementById('daysUntil').innerText = Math.max(0, dayjs(appData.tixing.next_visit_date).diff(dayjs(), 'day'));
             document.getElementById('visitDate').innerText = dayjs(appData.tixing.next_visit_date).format('MM/DD');
