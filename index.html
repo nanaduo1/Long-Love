@@ -106,7 +106,7 @@
             <p class="text-[10px] text-gray-400 mt-1 text-right">总容量 120</p>
         </div>
         
-        <!-- 距离复查卡片 (样式已修改) -->
+        <!-- 距离复查卡片 -->
         <div class="card shadow-apple mb-0 p-4 flex flex-col justify-between">
             <span class="text-xs font-bold text-gray-400 uppercase">距离复查</span>
             <div class="flex items-end gap-1 my-1">
@@ -388,8 +388,6 @@
                 if (type === 'am') { log.taken_am = true; log.time_am = dayjs().format('HH:mm'); }
                 if (type === 'pm') { log.taken_pm = true; log.time_pm = dayjs().format('HH:mm'); }
 
-                // 优化点：打卡仅更新 chiyao.json，不再更新库存(tixing.json)，避免双重请求卡顿
-                // 库存扣减由 calculateStock() 基于时间自动处理
                 await saveFile('chiyao.json', appData.chiyao);
                 
                 renderUI(); setGhStatus('success');
@@ -406,23 +404,14 @@
             try { await saveFile('chiyao.json', appData.chiyao); } catch(e){}
         }
 
-        // 新增：库存计算逻辑 (每12小时扣2粒)
         function calculateStock() {
             if (!appData.tixing || !appData.tixing.total_pills) return 0;
-            
-            // 如果没有记录上次更新库存的时间，默认返回记录值
             if (!appData.tixing.stock_last_save) return appData.tixing.total_pills;
-
             const lastSave = dayjs(appData.tixing.stock_last_save);
             const now = dayjs();
-            
-            // 计算经过的小时数
             const hoursPassed = now.diff(lastSave, 'hour');
-            
-            // 策略：每过 12 小时扣 2 粒 (自动模拟 12:00 和 24:00 的扣减)
             const deductions = Math.floor(hoursPassed / 12);
             const consumed = deductions * 2;
-            
             return Math.max(0, appData.tixing.total_pills - consumed);
         }
 
@@ -430,7 +419,6 @@
             const today = dayjs().format('YYYY-MM-DD');
             const log = appData.chiyao.find(l => l.date === today) || {};
             
-            // Med Status
             const updateBtn = (type, taken, time) => {
                 const cap = type.charAt(0).toUpperCase() + type.slice(1);
                 const el = document.getElementById(`check${cap}`);
@@ -443,23 +431,17 @@
             if(log.taken_am && log.taken_pm) card.className = "card shadow-apple bg-gradient-to-br from-emerald-500 to-green-500 text-white relative overflow-hidden transition-all duration-500";
             else card.className = "card shadow-apple bg-gradient-to-br from-blue-500 to-indigo-600 text-white relative overflow-hidden transition-all duration-500";
 
-            // Stock & Water
             document.getElementById('waterCount').innerText = log.water_count || 0;
             
-            // 使用新的计算逻辑显示库存
             const calculatedStock = calculateStock();
             document.getElementById('stockCount').innerText = calculatedStock;
             document.getElementById('stockBar').style.width = `${Math.min(100, (calculatedStock / 120) * 100)}%`;
             
-            // --- 复查卡片逻辑更新 ---
             const daysLeft = Math.max(0, dayjs(appData.tixing.next_visit_date).diff(dayjs(), 'day'));
             document.getElementById('daysUntil').innerText = daysLeft;
-            
-            // 复查进度条：假设一般复查周期为 30 天作为满刻度 (如果剩余天数>30，则满条，否则按比例)
-            const maxRevisitDays = 30; 
+            const maxRevisitDays = 90; 
             const revisitPercent = Math.min(100, (daysLeft / maxRevisitDays) * 100);
             document.getElementById('daysBar').style.width = `${revisitPercent}%`;
-
             document.getElementById('visitDate').innerText = dayjs(appData.tixing.next_visit_date).format('YYYY-MM-DD');
 
             renderWeekHistory();
@@ -505,16 +487,78 @@
                 options: { ...commonOpts, scales:{ y:{type:'logarithmic', grid:{borderDash:[4,4]}}, x:{grid:{display:false}} } }
             });
 
+            // 定义背景安全区间插件
+            const safetyZonesPlugin = {
+                id: 'safetyZones',
+                beforeDraw: (chart) => {
+                    const { ctx, chartArea: { left, top, right, bottom, width, height }, scales: { y, y1 } } = chart;
+                    
+                    // 1. 绘制白细胞安全区间 (WBC: 3.5 - 9.5) - 淡绿色
+                    if(y) {
+                        // 注意: Chart.js 坐标系中 y 轴是向下的，数值越大 pixel 越小
+                        const yTop = y.getPixelForValue(9.5); 
+                        const yBottom = y.getPixelForValue(3.5);
+                        
+                        // 确保绘制在图表区域内
+                        if (yBottom > top && yTop < bottom) {
+                            ctx.save();
+                            ctx.fillStyle = 'rgba(16, 185, 129, 0.1)'; // 淡绿色
+                            const rectTop = Math.max(top, yTop);
+                            const rectBottom = Math.min(bottom, yBottom);
+                            if(rectBottom > rectTop) {
+                                ctx.fillRect(left, rectTop, width, rectBottom - rectTop);
+                            }
+                            ctx.restore();
+                        }
+                    }
+
+                    // 2. 绘制血小板安全区间 (PLT: 125 - 350) - 淡蓝色
+                    if(y1) {
+                        const y1Top = y1.getPixelForValue(350);
+                        const y1Bottom = y1.getPixelForValue(125);
+                        
+                        if (y1Bottom > top && y1Top < bottom) {
+                            ctx.save();
+                            ctx.fillStyle = 'rgba(59, 130, 246, 0.1)'; // 淡蓝色
+                            const rectTop = Math.max(top, y1Top);
+                            const rectBottom = Math.min(bottom, y1Bottom);
+                            if(rectBottom > rectTop) {
+                                ctx.fillRect(left, rectTop, width, rectBottom - rectTop);
+                            }
+                            ctx.restore();
+                        }
+                    }
+                }
+            };
+
             if(window.myBloodChart) window.myBloodChart.destroy();
             window.myBloodChart = new Chart(document.getElementById('chartBlood').getContext('2d'), {
                 type: 'line',
                 data: { labels, datasets: [
-                    { label: 'WBC', data: data.map(d=>d.wbc), borderColor: '#10b981', tension:0.3, yAxisID:'y', spanGaps: true },
-                    { label: 'PLT', data: data.map(d=>d.plt), borderColor: '#f59e0b', tension:0.3, yAxisID:'y1', spanGaps: true }
+                    { label: 'WBC', data: data.map(d=>d.wbc), borderColor: '#10b981', backgroundColor: '#10b981', tension:0.3, yAxisID:'y', spanGaps: true },
+                    { label: 'PLT', data: data.map(d=>d.plt), borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension:0.3, yAxisID:'y1', spanGaps: true }
                 ]},
-                options: { ...commonOpts,
+                plugins: [safetyZonesPlugin], // 注册自定义插件
+                options: { 
+                    ...commonOpts,
                     interaction:{mode:'index', intersect:false},
-                    scales:{ y:{position:'left', grid:{borderDash:[4,4]}}, y1:{position:'right', grid:{display:false}}, x:{grid:{display:false}} }
+                    scales:{ 
+                        y:{
+                            position:'left', 
+                            grid:{borderDash:[4,4]},
+                            // 左侧坐标轴 (白细胞) 设置为绿色
+                            ticks: { color: '#10b981' }, 
+                            border: { color: '#10b981', display: true }
+                        }, 
+                        y1:{
+                            position:'right', 
+                            grid:{display:false},
+                            // 右侧坐标轴 (血小板) 设置为橙色
+                            ticks: { color: '#f59e0b' },
+                            border: { color: '#f59e0b', display: true }
+                        }, 
+                        x:{grid:{display:false}} 
+                    }
                 }
             });
         }
@@ -562,7 +606,6 @@
         function openEntryModal() {
             document.getElementById('entryModal').classList.remove('hidden');
             document.getElementById('inDate').value = dayjs().format('YYYY-MM-DD');
-            // 打开弹窗时，填入当前显示的值（估算值），用户保存后将变成基准值
             document.getElementById('inStock').value = calculateStock();
             document.getElementById('inNextVisit').value = appData.tixing.next_visit_date;
         }
@@ -571,8 +614,6 @@
         async function saveEntryData() {
             const btn = document.getElementById('btnSave');
             btn.innerText = "提交中..."; btn.disabled = true;
-            
-            // 优化：无论成功与否，最终都刷新页面，不再长时间卡死或弹红框
             try {
                 const date = document.getElementById('inDate').value;
                 const wbc = document.getElementById('inWbc').value;
@@ -591,16 +632,15 @@
                 const stock = parseInt(document.getElementById('inStock').value);
                 if(!isNaN(stock)) {
                     appData.tixing.total_pills = stock;
-                    // 关键：保存库存时，记录当前时间戳。以后每次打开网页，基于这个时间戳自动扣减
                     appData.tixing.stock_last_save = dayjs().toISOString(); 
                 }
                 appData.tixing.next_visit_date = document.getElementById('inNextVisit').value;
 
                 await Promise.all([saveFile('tijian.json', appData.tijian), saveFile('tixing.json', appData.tixing)]);
-                location.reload(); // 成功后刷新
+                location.reload(); 
             } catch(e) { 
                 console.error(e);
-                location.reload(); // 失败后也刷新，不再弹窗报错
+                location.reload(); 
             }
         }
 
