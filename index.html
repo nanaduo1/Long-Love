@@ -455,8 +455,8 @@
             const daysLeft = Math.max(0, dayjs(appData.tixing.next_visit_date).diff(dayjs(), 'day'));
             document.getElementById('daysUntil').innerText = daysLeft;
             
-            // 复查进度条：假设一般复查周期为 90 天作为满刻度 (如果剩余天数>90，则满条，否则按比例)
-            const maxRevisitDays = 90; 
+            // 复查进度条：假设一般复查周期为 30 天作为满刻度 (如果剩余天数>30，则满条，否则按比例)
+            const maxRevisitDays = 30; 
             const revisitPercent = Math.min(100, (daysLeft / maxRevisitDays) * 100);
             document.getElementById('daysBar').style.width = `${revisitPercent}%`;
 
