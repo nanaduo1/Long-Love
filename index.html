@@ -93,6 +93,7 @@
     </div>
 
     <div class="grid grid-cols-2 gap-3 mb-3">
+        <!-- 药物库存卡片 -->
         <div class="card shadow-apple mb-0 p-4 flex flex-col justify-between">
             <span class="text-xs font-bold text-gray-400 uppercase">爱心胶囊 (估算)</span>
             <div class="flex items-end gap-1 my-1">
@@ -104,13 +105,18 @@
             </div>
             <p class="text-[10px] text-gray-400 mt-1 text-right">总容量 120</p>
         </div>
+        
+        <!-- 距离复查卡片 (样式已修改) -->
         <div class="card shadow-apple mb-0 p-4 flex flex-col justify-between">
             <span class="text-xs font-bold text-gray-400 uppercase">距离复查</span>
             <div class="flex items-end gap-1 my-1">
                 <span class="text-3xl font-extrabold text-gray-900" id="daysUntil">--</span>
                 <span class="text-xs text-gray-500 mb-1 font-bold">天</span>
             </div>
-            <p class="text-[10px] text-indigo-500 font-bold bg-indigo-50 inline-block px-2 py-0.5 rounded" id="visitDate">--/--</p>
+            <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div id="daysBar" class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-1 text-right">复查日期 <span id="visitDate">--/--</span></p>
         </div>
     </div>
 
@@ -445,8 +451,16 @@
             document.getElementById('stockCount').innerText = calculatedStock;
             document.getElementById('stockBar').style.width = `${Math.min(100, (calculatedStock / 120) * 100)}%`;
             
-            document.getElementById('daysUntil').innerText = Math.max(0, dayjs(appData.tixing.next_visit_date).diff(dayjs(), 'day'));
-            document.getElementById('visitDate').innerText = dayjs(appData.tixing.next_visit_date).format('MM/DD');
+            // --- 复查卡片逻辑更新 ---
+            const daysLeft = Math.max(0, dayjs(appData.tixing.next_visit_date).diff(dayjs(), 'day'));
+            document.getElementById('daysUntil').innerText = daysLeft;
+            
+            // 复查进度条：假设一般复查周期为 90 天作为满刻度 (如果剩余天数>90，则满条，否则按比例)
+            const maxRevisitDays = 90; 
+            const revisitPercent = Math.min(100, (daysLeft / maxRevisitDays) * 100);
+            document.getElementById('daysBar').style.width = `${revisitPercent}%`;
+
+            document.getElementById('visitDate').innerText = dayjs(appData.tixing.next_visit_date).format('YYYY-MM-DD');
 
             renderWeekHistory();
             renderCharts();
