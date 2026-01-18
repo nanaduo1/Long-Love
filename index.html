@@ -441,7 +441,7 @@
             
             const daysLeft = Math.max(0, dayjs(appData.tixing.next_visit_date).diff(dayjs(), 'day'));
             document.getElementById('daysUntil').innerText = daysLeft;
-            const maxRevisitDays = 90; 
+            const maxRevisitDays = 30; 
             const revisitPercent = Math.min(100, (daysLeft / maxRevisitDays) * 100);
             document.getElementById('daysBar').style.width = `${revisitPercent}%`;
             document.getElementById('visitDate').innerText = dayjs(appData.tixing.next_visit_date).format('YYYY-MM-DD');
