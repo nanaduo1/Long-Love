@@ -11,10 +11,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- 引入 Hammer.js (手势库) 和 Chart.js Zoom 插件 -->
-    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/chartjs-plugin-zoom.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/zh-cn.js"></script>
     <style>
@@ -134,7 +130,8 @@
 
     <div class="card shadow-apple p-4 mb-3">
         <div class="flex justify-between items-center mb-2">
-            <div>
+            <!-- 强制高度容器 -->
+            <div class="h-10 flex flex-col justify-center">
                 <div class="flex items-center gap-1">
                     <h3 class="text-sm font-bold text-gray-800">BCR-ABL % (近1年)</h3>
                     <!-- 信息图标按钮 -->
@@ -146,21 +143,22 @@
                 </div>
                 <span class="text-[10px] text-gray-400">融合基因指数</span>
             </div>
-            <button onclick="showLabHistory('bcr')" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md">详细</button>
+            <button onclick="showLabHistory('bcr')" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md h-7">详细</button>
         </div>
         <div style="height: 180px;"><canvas id="chartBcr"></canvas></div>
     </div>
 
     <div class="card shadow-apple p-4 mb-6">
         <div class="flex justify-between items-center mb-2">
-            <div>
+            <!-- 强制高度容器 -->
+            <div class="h-10 flex flex-col justify-center">
                 <h3 class="text-sm font-bold text-gray-800">血常规趋势 (近1年)</h3>
                 <div class="flex gap-2 mt-0.5">
                     <span class="text-[10px] flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>WBC 白细胞</span>
                     <span class="text-[10px] flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>PLT 血小板</span>
                 </div>
             </div>
-            <button onclick="showLabHistory('blood')" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md">详细</button>
+            <button onclick="showLabHistory('blood')" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md h-7">详细</button>
         </div>
         <div style="height: 180px;"><canvas id="chartBlood"></canvas></div>
     </div>
@@ -499,9 +497,11 @@
                     
                     // 1. 绘制白细胞安全区间 (WBC: 3.5 - 9.5) - 淡绿色
                     if(y) {
+                        // 注意: Chart.js 坐标系中 y 轴是向下的，数值越大 pixel 越小
                         const yTop = y.getPixelForValue(9.5); 
                         const yBottom = y.getPixelForValue(3.5);
                         
+                        // 确保绘制在图表区域内
                         if (yBottom > top && yTop < bottom) {
                             ctx.save();
                             ctx.fillStyle = 'rgba(16, 185, 129, 0.1)'; // 淡绿色
@@ -514,14 +514,14 @@
                         }
                     }
 
-                    // 2. 绘制血小板安全区间 (PLT: 125 - 350) - 改为淡橙色
+                    // 2. 绘制血小板安全区间 (PLT: 125 - 350) - 淡橙色
                     if(y1) {
                         const y1Top = y1.getPixelForValue(350);
                         const y1Bottom = y1.getPixelForValue(125);
                         
                         if (y1Bottom > top && y1Top < bottom) {
                             ctx.save();
-                            ctx.fillStyle = 'rgba(245, 158, 11, 0.15)'; // 淡橙色 (amber-500 with low opacity)
+                            ctx.fillStyle = 'rgba(245, 158, 11, 0.1)'; // 淡橙色
                             const rectTop = Math.max(top, y1Top);
                             const rectBottom = Math.min(bottom, y1Bottom);
                             if(rectBottom > rectTop) {
@@ -540,43 +540,26 @@
                     { label: 'WBC', data: data.map(d=>d.wbc), borderColor: '#10b981', backgroundColor: '#10b981', tension:0.3, yAxisID:'y', spanGaps: true },
                     { label: 'PLT', data: data.map(d=>d.plt), borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension:0.3, yAxisID:'y1', spanGaps: true }
                 ]},
-                plugins: [safetyZonesPlugin], 
+                plugins: [safetyZonesPlugin], // 注册自定义插件
                 options: { 
                     ...commonOpts,
                     interaction:{mode:'index', intersect:false},
-                    // 启用缩放插件
-                    plugins: {
-                        legend: { display: false },
-                        zoom: {
-                            zoom: {
-                                wheel: { enabled: true },
-                                pinch: { enabled: true },
-                                mode: 'x', // 仅允许在X轴（时间）方向缩放
-                            },
-                            pan: {
-                                enabled: true,
-                                mode: 'x', // 仅允许在X轴方向平移
-                            }
-                        }
-                    },
-                    scales: { 
+                    scales:{ 
                         y:{
                             position:'left', 
                             grid:{borderDash:[4,4]},
+                            // 左侧坐标轴 (白细胞) 设置为绿色
                             ticks: { color: '#10b981' }, 
                             border: { color: '#10b981', display: true }
                         }, 
                         y1:{
                             position:'right', 
                             grid:{display:false},
+                            // 右侧坐标轴 (血小板) 设置为橙色
                             ticks: { color: '#f59e0b' },
                             border: { color: '#f59e0b', display: true }
                         }, 
-                        x:{
-                            grid:{display:false},
-                            // 确保X轴有最小最大限制，防止缩放过度（可选，取决于数据量）
-                            min: data.length > 10 ? labels[data.length - 10] : undefined 
-                        } 
+                        x:{grid:{display:false}} 
                     }
                 }
             });
