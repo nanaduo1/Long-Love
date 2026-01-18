@@ -11,6 +11,10 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 引入 Hammer.js (手势库) 和 Chart.js Zoom 插件 -->
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/chartjs-plugin-zoom.min.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/zh-cn.js"></script>
     <style>
@@ -495,11 +499,9 @@
                     
                     // 1. 绘制白细胞安全区间 (WBC: 3.5 - 9.5) - 淡绿色
                     if(y) {
-                        // 注意: Chart.js 坐标系中 y 轴是向下的，数值越大 pixel 越小
                         const yTop = y.getPixelForValue(9.5); 
                         const yBottom = y.getPixelForValue(3.5);
                         
-                        // 确保绘制在图表区域内
                         if (yBottom > top && yTop < bottom) {
                             ctx.save();
                             ctx.fillStyle = 'rgba(16, 185, 129, 0.1)'; // 淡绿色
@@ -512,14 +514,14 @@
                         }
                     }
 
-                    // 2. 绘制血小板安全区间 (PLT: 125 - 350) - 淡蓝色
+                    // 2. 绘制血小板安全区间 (PLT: 125 - 350) - 改为淡橙色
                     if(y1) {
                         const y1Top = y1.getPixelForValue(350);
                         const y1Bottom = y1.getPixelForValue(125);
                         
                         if (y1Bottom > top && y1Top < bottom) {
                             ctx.save();
-                            ctx.fillStyle = 'rgba(59, 130, 246, 0.1)'; // 淡蓝色
+                            ctx.fillStyle = 'rgba(245, 158, 11, 0.15)'; // 淡橙色 (amber-500 with low opacity)
                             const rectTop = Math.max(top, y1Top);
                             const rectBottom = Math.min(bottom, y1Bottom);
                             if(rectBottom > rectTop) {
@@ -538,26 +540,43 @@
                     { label: 'WBC', data: data.map(d=>d.wbc), borderColor: '#10b981', backgroundColor: '#10b981', tension:0.3, yAxisID:'y', spanGaps: true },
                     { label: 'PLT', data: data.map(d=>d.plt), borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension:0.3, yAxisID:'y1', spanGaps: true }
                 ]},
-                plugins: [safetyZonesPlugin], // 注册自定义插件
+                plugins: [safetyZonesPlugin], 
                 options: { 
                     ...commonOpts,
                     interaction:{mode:'index', intersect:false},
-                    scales:{ 
+                    // 启用缩放插件
+                    plugins: {
+                        legend: { display: false },
+                        zoom: {
+                            zoom: {
+                                wheel: { enabled: true },
+                                pinch: { enabled: true },
+                                mode: 'x', // 仅允许在X轴（时间）方向缩放
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'x', // 仅允许在X轴方向平移
+                            }
+                        }
+                    },
+                    scales: { 
                         y:{
                             position:'left', 
                             grid:{borderDash:[4,4]},
-                            // 左侧坐标轴 (白细胞) 设置为绿色
                             ticks: { color: '#10b981' }, 
                             border: { color: '#10b981', display: true }
                         }, 
                         y1:{
                             position:'right', 
                             grid:{display:false},
-                            // 右侧坐标轴 (血小板) 设置为橙色
                             ticks: { color: '#f59e0b' },
                             border: { color: '#f59e0b', display: true }
                         }, 
-                        x:{grid:{display:false}} 
+                        x:{
+                            grid:{display:false},
+                            // 确保X轴有最小最大限制，防止缩放过度（可选，取决于数据量）
+                            min: data.length > 10 ? labels[data.length - 10] : undefined 
+                        } 
                     }
                 }
             });
