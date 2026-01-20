@@ -85,15 +85,14 @@
         /* 底部文字 */
         .loading-text {
             margin-top: 30px;
-            font-size: 16px; font-weight: bold; letter-spacing: 1.5px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-size: 12px; font-weight: Light; letter-spacing: 1.5px;
             display: flex; align-items: center; gap: 8px;
         }
         .dots::after { content: ''; animation: dots-anim 1.5s infinite steps(4, end); }
         @keyframes dots-anim {
             0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%, 100% { content: '...'; }
         }
-        #percentText { font-family: monospace; opacity: 0.8; font-size: 14px; }
+        #percentText { font-family: monospace; opacity: 0.8; font-size: 11px; }
 
     </style>
     <script>dayjs.locale('zh-cn');</script>
