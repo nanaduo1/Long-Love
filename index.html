@@ -185,6 +185,15 @@
         </div>
     </div>
 
+    <!-- 移动后的位置：周历史视图 -->
+    <div class="card shadow-apple p-4 mb-3">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-bold text-gray-800">让我看看有没有按时吃药😏</h3>
+            <button onclick="showHistoryModal()" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md">详细</button>
+        </div>
+        <div class="flex justify-between" id="weekHistory"></div>
+    </div>
+
     <div class="grid grid-cols-2 gap-3 mb-3">
         <!-- 药物库存卡片 -->
         <div class="card shadow-apple mb-0 p-4 flex flex-col justify-between">
@@ -207,18 +216,50 @@
                 <span class="text-xs text-gray-500 mb-1 font-bold">天</span>
             </div>
             <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                <div id="daysBar" class="bg-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                <div id="daysBar" class="bg-orange-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
             </div>
             <p class="text-[10px] text-gray-400 mt-1 text-right">复查日期 <span id="visitDate">--/--</span></p>
         </div>
     </div>
 
-    <div class="card shadow-apple p-4 mb-3">
-        <div class="flex justify-between items-center mb-3">
-            <h3 class="text-sm font-bold text-gray-800">让我看看有没有按时吃药😏</h3>
-            <button onclick="showHistoryModal()" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md">详细</button>
+    <!-- 卡片组：距离基因检测 与 距离生理期 -->
+    <div class="grid grid-cols-2 gap-3 mb-3">
+        <!-- 距离基因检测卡片 -->
+        <div class="card shadow-apple mb-0 p-4 flex flex-col justify-between relative overflow-hidden">
+            <div class="flex justify-between items-start z-10">
+                <span class="text-xs font-bold text-gray-400 uppercase">距离基因检测</span>
+                <button onclick="openGeneModal()" class="text-gray-400 hover:text-gray-600 active:scale-95 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                </button>
+            </div>
+            <div class="flex items-end gap-1 my-1">
+                <span class="text-3xl font-extrabold text-blue-600" id="geneDays">--</span>
+                <span class="text-xs text-gray-500 mb-1 font-bold">天</span>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-1">计划: <span id="geneDate">--</span></p>
         </div>
-        <div class="flex justify-between" id="weekHistory"></div>
+
+        <!-- 距离生理期卡片 -->
+        <div id="periodCard" class="card shadow-apple mb-0 p-4 flex flex-col justify-between relative overflow-hidden transition-all duration-500">
+            <div class="flex justify-between items-start z-10">
+                <span id="periodTitle" class="text-xs font-bold text-gray-400 uppercase transition-colors">距离生理期</span>
+                <button onclick="openPeriodModal()" id="periodPlusBtn" class="text-gray-400 hover:text-gray-600 active:scale-95 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                </button>
+            </div>
+            <div class="flex items-end gap-1 my-1 z-10">
+                <span class="text-3xl font-extrabold text-gray-900 transition-colors" id="periodMainText">--</span>
+                <span class="text-xs text-gray-500 mb-1 font-bold transition-colors" id="periodUnit">天</span>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-1 transition-colors z-10" id="periodSubText">预估时间 --</p>
+            
+            <!-- 花瓣装饰 (SVG) -->
+            <div class="absolute -bottom-2 -right-2 w-16 h-16 opacity-20 pointer-events-none">
+                 <svg viewBox="0 0 100 100" fill="currentColor" class="text-pink-300">
+                    <path d="M50 50 C20 0 80 0 50 50 C80 20 80 80 50 50 C80 80 20 80 50 50 C20 80 20 20 50 50 Z" />
+                 </svg>
+            </div>
+        </div>
     </div>
 
     <div class="card shadow-apple p-4 mb-3">
@@ -234,7 +275,7 @@
                         </svg>
                     </button>
                 </div>
-                <span class="text-[10px] text-gray-400">下次基因检测时间为4月</span>
+                <span class="text-[10px] text-gray-400">当前基因检测周期为3月1检，持续2年</span>
             </div>
             <button onclick="showLabHistory('bcr')" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-md h-7">详细</button>
         </div>
@@ -272,6 +313,23 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
         <span>录入化验单 / 校准库存</span>
     </button>
+
+    <!-- 基因检测设置弹窗 -->
+    <div id="geneModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-2xl p-6 shadow-2xl animate-slide-up">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold">设置下次基因检测</h2>
+                <button onclick="closeGeneModal()" class="bg-gray-100 rounded-full p-1 w-8 h-8 text-gray-500 font-bold">✕</button>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-gray-500 mb-1">目标日期</label>
+                <input type="date" id="inGeneDate" class="w-full bg-gray-100 rounded-lg p-3 text-sm font-bold outline-none">
+            </div>
+
+            <button onclick="saveGeneData()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30">保存</button>
+        </div>
+    </div>
 
     <!-- 信息弹窗 -->
     <div id="infoModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity">
@@ -372,6 +430,54 @@
         </div>
     </div>
 
+    <!-- 月经记录弹窗 -->
+    <div id="periodModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center transition-opacity">
+        <div class="bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up h-[70vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold">生理期记录</h2>
+                <button onclick="closePeriodModal()" class="bg-gray-100 rounded-full p-1 w-8 h-8 text-gray-500 font-bold">✕</button>
+            </div>
+
+            <div class="flex gap-3 mb-6">
+                <button onclick="handlePeriodAction('start')" class="flex-1 bg-pink-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-pink-500/30 active:scale-95 transition">
+                    姨妈来了 (开始)
+                </button>
+                <button onclick="handlePeriodAction('end')" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-200 active:scale-95 transition">
+                    姨妈走了 (结束)
+                </button>
+            </div>
+
+            <h3 class="text-xs font-bold text-gray-400 mb-2 uppercase">历史记录</h3>
+            <div id="periodHistoryList" class="flex-1 overflow-y-auto space-y-2 pb-4">
+                <!-- 历史列表由JS生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 月经日期修改弹窗 -->
+    <div id="periodEditModal" class="fixed inset-0 bg-black/50 hidden z-[60] flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-xs rounded-2xl p-5 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-gray-800">修改日期</h3>
+                <button onclick="document.getElementById('periodEditModal').classList.add('hidden')" class="bg-gray-100 rounded-full p-1 w-6 h-6 text-gray-500 flex items-center justify-center text-xs">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs text-gray-500 font-bold">开始日期</label>
+                    <input type="date" id="editPeriodStart" class="w-full bg-gray-100 rounded-lg p-2 text-sm mt-1">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 font-bold">结束日期</label>
+                    <input type="date" id="editPeriodEnd" class="w-full bg-gray-100 rounded-lg p-2 text-sm mt-1">
+                </div>
+            </div>
+            <div class="flex gap-2 mt-5">
+                <button onclick="deletePeriodEntry()" class="flex-1 bg-red-50 text-red-500 py-2 rounded-lg text-sm font-bold">删除</button>
+                <button onclick="savePeriodEdit()" class="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-bold">保存</button>
+            </div>
+        </div>
+    </div>
+
     <div id="historyModal" class="fixed inset-0 bg-white z-50 hidden overflow-y-auto">
         <div class="p-4 max-w-sm mx-auto">
             <div class="flex justify-between items-center mb-6 mt-2">
@@ -414,7 +520,7 @@
     <script>
         const CACHE_KEY = 'cml_config_v10';
         let config = JSON.parse(localStorage.getItem(CACHE_KEY));
-        let appData = { tixing: null, chiyao: [], tijian: [] };
+        let appData = { tixing: null, chiyao: [], tijian: [], yuejing: [], jiyin: null }; // 增加 jiyin 初始化
 
         // --- 核心：初始化逻辑 ---
         async function init() {
@@ -439,6 +545,9 @@
                     await loadFile('tixing.json', 'tixing');
                     await loadFile('chiyao.json', 'chiyao');
                     await loadFile('tijian.json', 'tijian');
+                    try { await loadFile('yuejing.json', 'yuejing'); } catch(e) { appData.yuejing = []; }
+                    // 新增基因数据加载
+                    try { await loadFile('jiyin.json', 'jiyin'); } catch(e) { appData.jiyin = { targetDate: "" }; }
                     setGhStatus('success');
                 } catch (err) {
                     showError("同步失败: " + err.message);
@@ -601,6 +710,217 @@
 
             renderWeekHistory();
             renderCharts();
+            renderPeriodCard(); 
+            renderGeneCard(); // 渲染基因卡片
+        }
+        
+        // --- 新增功能：基因检测逻辑 ---
+        function renderGeneCard() {
+            if (!appData.jiyin || !appData.jiyin.targetDate) {
+                document.getElementById('geneDays').innerText = "--";
+                document.getElementById('geneDate').innerText = "未设置";
+                return;
+            }
+            const target = dayjs(appData.jiyin.targetDate);
+            const today = dayjs();
+            const diff = target.diff(today, 'day');
+            
+            document.getElementById('geneDays').innerText = diff > 0 ? diff : 0;
+            document.getElementById('geneDate').innerText = target.format('YYYY-MM-DD');
+        }
+
+        function openGeneModal() {
+            document.getElementById('geneModal').classList.remove('hidden');
+            if(appData.jiyin && appData.jiyin.targetDate) {
+                document.getElementById('inGeneDate').value = appData.jiyin.targetDate;
+            }
+        }
+        function closeGeneModal() { document.getElementById('geneModal').classList.add('hidden'); }
+
+        async function saveGeneData() {
+            const date = document.getElementById('inGeneDate').value;
+            if (date) {
+                appData.jiyin = { targetDate: date };
+                await saveFile('jiyin.json', appData.jiyin);
+                closeGeneModal();
+                renderUI();
+            }
+        }
+
+        // --- 月经逻辑与渲染 ---
+        function renderPeriodCard() {
+            if (!appData.yuejing || appData.yuejing.length === 0) {
+                document.getElementById('periodMainText').innerText = "--";
+                document.getElementById('periodSubText').innerText = "请录入数据";
+                return;
+            }
+
+            // 按开始日期倒序排列
+            const sorted = appData.yuejing.sort((a, b) => dayjs(b.startDate).diff(dayjs(a.startDate)));
+            const lastRecord = sorted[0];
+            const today = dayjs();
+            const start = dayjs(lastRecord.startDate);
+            // 默认经期长度 5 天，周期 28 天
+            const duration = 5; 
+            const cycle = 28;
+
+            // 判断是否在经期中
+            let isPeriodActive = false;
+            let daysInto = 0;
+            
+            // 如果有结束日期，根据结束日期判断；如果没有，默认5天后结束
+            const endDate = lastRecord.endDate ? dayjs(lastRecord.endDate) : start.add(duration, 'day');
+            
+            if ((today.isSame(start, 'day') || today.isAfter(start, 'day')) && (today.isSame(endDate, 'day') || today.isBefore(endDate, 'day'))) {
+                isPeriodActive = true;
+                daysInto = today.diff(start, 'day') + 1;
+            }
+
+            const card = document.getElementById('periodCard');
+            const title = document.getElementById('periodTitle');
+            const mainText = document.getElementById('periodMainText');
+            const subText = document.getElementById('periodSubText');
+            const unit = document.getElementById('periodUnit');
+            const btn = document.getElementById('periodPlusBtn');
+
+            if (isPeriodActive) {
+                // 月经期样式：粉色渐变，反白文字
+                card.className = "card shadow-apple mb-0 p-4 flex flex-col justify-between relative overflow-hidden transition-all duration-500 bg-gradient-to-br from-pink-400 to-rose-500";
+                title.className = "text-xs font-bold text-white/80 uppercase transition-colors";
+                mainText.className = "text-3xl font-extrabold text-white transition-colors";
+                subText.className = "text-[10px] text-white/80 mt-1 transition-colors z-10";
+                unit.className = "text-xs text-white/80 mb-1 font-bold transition-colors";
+                btn.className = "text-white/80 hover:text-white active:scale-95 transition-all";
+
+                title.innerText = "生理期中";
+                mainText.innerText = daysInto;
+                unit.innerText = "天";
+                subText.innerText = `开始于 ${start.format('MM-DD')}`;
+            } else {
+                // 非月经期样式：恢复原样
+                card.className = "card shadow-apple mb-0 p-4 flex flex-col justify-between relative overflow-hidden transition-all duration-500 bg-white";
+                title.className = "text-xs font-bold text-gray-400 uppercase transition-colors";
+                mainText.className = "text-3xl font-extrabold text-gray-900 transition-colors";
+                subText.className = "text-[10px] text-gray-400 mt-1 transition-colors z-10";
+                unit.className = "text-xs text-gray-500 mb-1 font-bold transition-colors";
+                btn.className = "text-gray-400 hover:text-gray-600 active:scale-95 transition-all";
+
+                title.innerText = "距离生理期";
+                
+                // 预测下一次：上次开始 + 28天
+                const nextStart = start.add(cycle, 'day');
+                const daysUntil = nextStart.diff(today, 'day');
+                
+                // 如果 daysUntil < 0，说明已经推迟了
+                if (daysUntil < 0) {
+                    mainText.innerText = Math.abs(daysUntil);
+                    unit.innerText = "天 (推迟)";
+                    mainText.classList.add('text-red-500');
+                } else {
+                    mainText.innerText = daysUntil;
+                    unit.innerText = "天";
+                    mainText.classList.remove('text-red-500');
+                }
+                
+                const nextEnd = nextStart.add(duration - 1, 'day'); // 持续5天，所以是 start + 4
+                subText.innerText = `预估时间 ${nextStart.format('YYYY-MM-DD')}～${nextEnd.format('DD')}`;
+            }
+        }
+
+        // 月经弹窗逻辑
+        let editingIndex = -1;
+
+        function openPeriodModal() {
+            document.getElementById('periodModal').classList.remove('hidden');
+            renderPeriodHistory();
+        }
+        function closePeriodModal() { document.getElementById('periodModal').classList.add('hidden'); }
+
+        async function handlePeriodAction(action) {
+            const today = dayjs().format('YYYY-MM-DD');
+            if (!appData.yuejing) appData.yuejing = [];
+            
+            // 排序，找最近一次
+            appData.yuejing.sort((a, b) => dayjs(b.startDate).diff(dayjs(a.startDate)));
+            
+            if (action === 'start') {
+                // 如果最近一次还没有结束，先强制结束它（或者提示）？这里简化逻辑：直接新增
+                // 除非今天已经是开始日期
+                if (appData.yuejing.length > 0 && appData.yuejing[0].startDate === today) {
+                    // 已存在今天开始的记录，忽略
+                } else {
+                    appData.yuejing.unshift({ startDate: today, endDate: null }); // 加到最前
+                }
+            } else if (action === 'end') {
+                // 结束最近的一次
+                if (appData.yuejing.length > 0) {
+                    appData.yuejing[0].endDate = today;
+                }
+            }
+            
+            await saveFile('yuejing.json', appData.yuejing);
+            renderUI();
+            renderPeriodHistory();
+        }
+
+        function renderPeriodHistory() {
+            const list = document.getElementById('periodHistoryList');
+            list.innerHTML = '';
+            
+            if (!appData.yuejing) return;
+            // 倒序显示
+            const sorted = appData.yuejing.sort((a, b) => dayjs(b.startDate).diff(dayjs(a.startDate)));
+            
+            sorted.forEach((item, index) => {
+                const startStr = item.startDate;
+                const endStr = item.endDate ? item.endDate : (dayjs(startStr).add(4, 'day').format('YYYY-MM-DD') + " (自动)");
+                
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100 relative group active:scale-[0.98] transition";
+                div.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-base font-bold text-pink-500">${startStr}</span>
+                        <span class="text-gray-300">~</span>
+                        <span class="text-sm font-light text-gray-600">${endStr}</span>
+                    </div>
+                    <div class="text-gray-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </div>
+                `;
+                div.onclick = () => openPeriodEdit(index); // index 是基于 sorted 的
+                list.appendChild(div);
+            });
+        }
+
+        function openPeriodEdit(index) {
+            editingIndex = index;
+            const item = appData.yuejing[index];
+            document.getElementById('editPeriodStart').value = item.startDate;
+            document.getElementById('editPeriodEnd').value = item.endDate || '';
+            document.getElementById('periodEditModal').classList.remove('hidden');
+        }
+
+        async function savePeriodEdit() {
+            const s = document.getElementById('editPeriodStart').value;
+            const e = document.getElementById('editPeriodEnd').value;
+            if(s) {
+                appData.yuejing[editingIndex].startDate = s;
+                appData.yuejing[editingIndex].endDate = e || null;
+                await saveFile('yuejing.json', appData.yuejing);
+                document.getElementById('periodEditModal').classList.add('hidden');
+                renderPeriodHistory();
+                renderUI();
+            }
+        }
+
+        async function deletePeriodEntry() {
+            if (confirm("确定删除这条记录吗？")) {
+                appData.yuejing.splice(editingIndex, 1);
+                await saveFile('yuejing.json', appData.yuejing);
+                document.getElementById('periodEditModal').classList.add('hidden');
+                renderPeriodHistory();
+                renderUI();
+            }
         }
 
         function renderWeekHistory() {
