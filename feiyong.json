@@ -28,5 +28,20 @@
       "shangbao": 100,
       "geren": 100
     }
+  },
+  {
+    "id": "1768975900164",
+    "date": "2026-01-21",
+    "total": 600,
+    "items": {
+      "jiancha": 200,
+      "yaowu": 200,
+      "jiaotong": 200
+    },
+    "payment": {
+      "yibao": 200,
+      "shangbao": 200,
+      "geren": 200
+    }
   }
 ]
