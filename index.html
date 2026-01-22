@@ -626,7 +626,8 @@
         }
 
         // --- 天气模块开始 ---
-        let weatherConfig = JSON.parse(localStorage.getItem('weather_config')) || { name: 'Beijing', lat: 39.9042, lon: 116.4074 };
+        // 默认改为东莞 (Dongguan) 的经纬度
+let weatherConfig = JSON.parse(localStorage.getItem('weather_config')) || { name: 'Dongguan', lat: 23.0208, lon: 113.7518 };
         const weatherCodeMap = {
             0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
             45: '🌫️', 48: '🌫️',
