@@ -1029,7 +1029,7 @@
 
                 if(window.myBcrChart) window.myBcrChart.destroy();
                 window.myBcrChart = new Chart(canvasBcr.getContext('2d'), {
-                    type: 'line', data: { labels, datasets: [{ label: 'BCR-ABL', data: bcrData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill:true, tension:0.3, spanGaps: true }] },
+                    type: 'line', data: { labels, datasets: [{ label: 'BCR-ABL', data: bcrData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0)', fill:true, tension:0.3, spanGaps: true }] },
                     options: { ...commonOpts, scales:{ y:{type:'logarithmic', grid:{borderDash:[4,4]}}, x:{grid:{display:false}} } }
                 });
 
