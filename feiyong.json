@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "id": "1769070249105",
+    "date": "2026-01-22",
+    "total": 300,
+    "items": {
+      "jiancha": 100,
+      "yaowu": 100,
+      "jiaotong": 100
+    },
+    "payment": {
+      "yibao": 100,
+      "shangbao": 100,
+      "geren": 100
+    }
+  }
+]
