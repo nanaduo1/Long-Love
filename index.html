@@ -14,6 +14,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/zh-cn.js"></script>
+    <!-- 新增：引入 Lottie 动画库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", Helvetica, Arial, sans-serif; 
@@ -32,64 +35,93 @@
             -webkit-appearance: none; appearance: none; min-height: 44px;
         }
 
-        /* --- 加载屏样式 --- */
+        /* --- 新版加载屏样式 (Lottie) --- */
         #splashScreen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #3eb97f 10%, #3664ef 100%);
+            /* 默认背景，会被JS随机背景覆盖 */
+            background: #fff;
             z-index: 9999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             transition: opacity 0.6s ease-out, visibility 0.6s;
         }
-        .loader-container { position: relative; width: 140px; height: 140px; }
-        .heart-svg { width: 100%; height: 100%; overflow: visible; }
-        .liquid-group { clip-path: url(#heartClip); }
-        .wave { animation: wave-move 1.5s linear infinite; transform-origin: 50% 50%; }
-        @keyframes wave-move { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .glass-body { fill: rgba(255, 255, 255, 0.1); backdrop-filter: blur(2px); }
-        .glass-stroke { fill: none; stroke: rgba(255, 255, 255, 0.6); stroke-width: 2; filter: drop-shadow(0 0 2px rgba(255,255,255,0.5)); }
-        .highlight-large { fill: url(#shineGradient); opacity: 0.8; pointer-events: none; }
-        .loading-text { margin-top: 30px; font-size: 12px; font-weight: Light; letter-spacing: 1.2px; display: flex; align-items: center; gap: 8px; }
-        .dots::after { content: ''; animation: dots-anim 1.5s infinite steps(4, end); }
-        @keyframes dots-anim { 0%, 20% { content: ''; } 40% { content: '.'; } 60% { content: '..'; } 80%, 100% { content: '...'; } }
-        #percentText { font-family: monospace; opacity: 0.8; font-size: 11px; }
+
+        /* Lottie 容器 */
+        #lottie-container {
+            width: 240px;
+            height: 240px;
+            margin-bottom: 20px; /* 动画和文字的间距 */
+        }
+
+        /* 专属文案样式 */
+        .loading-text {
+            font-size: 13px;
+            font-weight: normal;
+            color: #ffffff;
+            text-align: center;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0);
+            padding: 0 20px;
+            margin-bottom: 20px; /* 留出底部空间给进度条 */
+        }
+
+        /* 底部进度条区域 */
+        .progress-wrapper {
+            position: absolute;
+            bottom: 60px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-text {
+            font-family: monospace;
+            font-size: 10px;
+            font-weight: light;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .progress-bg {
+            width: 60%; /* 进度条宽度 */
+            max-width: 240px;
+            height: 6px;
+            background-color: rgba(0, 0, 0, 0.15); /* 深色半透明底 */
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: rgba(255, 255, 255, 0.9); /* 白色进度 */
+            border-radius: 10px;
+            transition: width 0.1s linear;
+        }
     </style>
     <script>dayjs.locale('zh-cn');</script>
 </head>
 <body class="p-4 max-w-sm mx-auto">
 
-    <!-- 加载屏 -->
+    <!-- 加载屏 (结构更新) -->
     <div id="splashScreen">
-        <div class="loader-container">
-            <svg class="heart-svg" viewBox="0 0 100 90">
-                <defs>
-                    <path id="heartPath" d="M50,88 C50,88 12,65 12,35 C12,18 25,12 35,12 C42,12 48,16 50,22 C52,16 58,12 65,12 C75,12 88,18 88,35 C88,65 50,88 50,88 Z" />
-                    <clipPath id="heartClip"><use href="#heartPath" /></clipPath>
-                    <linearGradient id="liquidGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#d63031;stop-opacity:1" />
-                    </linearGradient>
-                    <linearGradient id="shineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.9" />
-                        <stop offset="50%" style="stop-color:#ffffff;stop-opacity:0.1" />
-                        <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
-                    </linearGradient>
-                </defs>
-                <use href="#heartPath" class="glass-body" />
-                <g class="liquid-group">
-                    <g id="waveContainer" transform="translate(0, 90)">
-                        <path class="wave" fill="url(#liquidGradient)" d="M0,0 C20,-4 30,-4 50,0 C70,4 80,4 100,0 C120,-4 130,-4 150,0 V100 H0 Z" transform="scale(2, 1)" />
-                        <rect x="0" y="0" width="300" height="100" fill="url(#liquidGradient)" />
-                    </g>
-                </g>
-                <use href="#heartPath" class="glass-stroke" />
-                <path d="M35,16 C25,16 16,22 16,35" fill="none" stroke="white" stroke-width="3" opacity="0.4" stroke-linecap="round" />
-                <ellipse cx="70" cy="25" rx="6" ry="3" transform="rotate(-30, 70, 25)" class="highlight-large" />
-                <circle cx="75" cy="20" r="1.5" fill="white" opacity="0.9" />
-            </svg>
+        <!-- 动画容器 -->
+        <div id="lottie-container"></div>
+        
+        <!-- 专属文案 -->
+        <div class="loading-text" id="splashText">Loading...</div>
+
+        <!-- 底部进度条 -->
+        <div class="progress-wrapper">
+            <span class="progress-text" id="percentText">0%</span>
+            <div class="progress-bg">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
         </div>
-        <div class="loading-text">老公的爱心加载中<span class="dots"></span> <span id="percentText">0%</span></div>
     </div>
 
     <!-- 顶部 -->
@@ -589,16 +621,108 @@
         let config = JSON.parse(localStorage.getItem(CACHE_KEY));
         let appData = { tixing: { total_pills: 0 }, chiyao: [], tijian: [], yuejing: [], jiyin: null };
 
+        // === 新增：加载动画配置 ===
+        const loadingConfig = [
+            { 
+                file: 'Walking Orange.json', 
+                text: '大吉大利，恭喜发财……', 
+                bg: 'linear-gradient(180deg, #A1C4FD 0%, #C2E9FB 100%)' , 
+                width: '300px', 
+                height: '300px', 
+                scale: 1.5
+            },
+            { 
+                file: 'Bird pair love and flying sky.json', 
+                text: '老婆，么么哒……', 
+                bg: 'linear-gradient(180deg, #A1C4FD 0%, #C2E9FB 100%)'
+            },
+            { 
+                file: 'Dino Dance.json', 
+                text: '宝贝，来啊，快活啊……', 
+                bg: 'linear-gradient(180deg, #A1C4FD 0%, #C2E9FB 100%)', 
+                width: '240px', 
+                height: '240px', 
+                scale: 1
+            },
+            { 
+                file: '12 tanets .json', 
+                text: '老婆，你看我香蕉大不大……', 
+                bg: 'linear-gradient(180deg, #A1C4FD 0%, #C2E9FB 100%)', 
+                width: '200px', 
+                height: '200px', 
+                scale: 1
+            },
+            { 
+                file: 'Hart express feelings of love.json', 
+                text: '老公的爱心加载中……', 
+                bg: 'linear-gradient(180deg, #A1C4FD 0%, #C2E9FB 100%)', 
+                width: '300px', 
+                height: '300px', 
+                scale: 1.5
+            },
+            { 
+                file: 'Digital Love.json', 
+                text: '老公的爱心加载中……', 
+                bg: 'linear-gradient(180deg, #A1C4FD 0%, #C2E9FB 100%)', 
+                width: '200px', 
+                height: '200px', 
+                scale: 1
+            },
+            { 
+                file: 'Dino Dance.json', 
+                text: '宝贝，来啊，快活啊……', 
+                bg: 'linear-gradient(180deg, #A1C4FD 0%, #C2E9FB 100%)'
+            }
+            // 请确保 loading 文件夹下有对应的 json 文件，可在此添加更多配置
+        ];
+
+        // === 新增：初始化加载动画 ===
+        function initLoader() {
+            const randomIndex = Math.floor(Math.random() * loadingConfig.length);
+            const selected = loadingConfig[randomIndex];
+            
+            // 设置背景和文字
+            const splash = document.getElementById('splashScreen');
+            const textEl = document.getElementById('splashText');
+            
+            if(splash && textEl) {
+                splash.style.background = selected.bg;
+                textEl.innerText = selected.text;
+            }
+
+            // 加载Lottie
+            try {
+                lottie.loadAnimation({
+                    container: document.getElementById('lottie-container'),
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: 'loading/' + selected.file // 路径：根目录下的 loading 文件夹
+                });
+            } catch(e) {
+                console.error("Lottie Load Error:", e);
+                // 兜底：如果加载失败，文字提示
+                if(textEl) textEl.innerText = "资源加载中...";
+            }
+        }
+
         async function init() {
             try {
+                // 1. 先启动加载画面逻辑
+                initLoader();
+                
                 startClock();
                 initWeather(); // 初始化天气
+                
                 if (!config) { 
                     removeSplash();
                     openSettings(); 
                     return; 
                 }
-                startLiquidAnimation(3000);
+                
+                // 2. 启动进度条动画 (替代原来的 Liquid Animation)
+                startProgressAnimation(3000); 
+                
                 const minWait = new Promise(resolve => setTimeout(resolve, 3000));
                 const loadData = (async () => {
                     try {
@@ -627,7 +751,7 @@
 
         // --- 天气模块开始 ---
         // 默认改为东莞 (Dongguan) 的经纬度
-let weatherConfig = JSON.parse(localStorage.getItem('weather_config')) || { name: 'Dongguan', lat: 23.0208, lon: 113.7518 };
+        let weatherConfig = JSON.parse(localStorage.getItem('weather_config')) || { name: 'Dongguan', lat: 23.0208, lon: 113.7518 };
         const weatherCodeMap = {
             0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
             45: '🌫️', 48: '🌫️',
@@ -802,29 +926,39 @@ let weatherConfig = JSON.parse(localStorage.getItem('weather_config')) || { name
         }
         // --- 天气模块结束 ---
 
-        function startLiquidAnimation(duration) {
-            const waveContainer = document.getElementById('waveContainer');
-            const percentText = document.getElementById('percentText');
-            const emptyY = 90, fullY = 8;
+        // === 修改：新版进度条动画逻辑 ===
+        function startProgressAnimation(duration) {
+            const bar = document.getElementById('progressBar');
+            const txt = document.getElementById('percentText');
+            
             let progress = 0;
-            const interval = 20;
-            const step = 100 / (duration / interval);
+            const interval = 20; // 刷新频率
+            const step = 100 / (duration / interval); // 计算每一步增加多少
+            
             const timer = setInterval(() => {
                 progress += step;
-                if (progress >= 100) { progress = 100; clearInterval(timer); }
-                if(percentText) percentText.innerText = Math.floor(progress) + "%";
-                if(waveContainer) {
-                    const currentY = emptyY - ((emptyY - fullY) * (progress / 100));
-                    waveContainer.setAttribute("transform", `translate(0, ${currentY})`);
+                if (progress >= 100) { 
+                    progress = 100; 
+                    clearInterval(timer); 
                 }
+                
+                // 更新 DOM
+                if(bar) bar.style.width = Math.floor(progress) + "%";
+                if(txt) txt.innerText = Math.floor(progress) + "%";
             }, interval);
         }
 
         function removeSplash() {
             const splash = document.getElementById('splashScreen');
             if(splash) {
-                splash.style.transform = "scale(1.05)"; splash.style.opacity = '0';
-                setTimeout(() => { splash.style.visibility = 'hidden'; splash.style.display = 'none'; }, 600);
+                // 稍微放大并淡出
+                splash.style.transform = "scale(1.05)"; 
+                splash.style.opacity = '0';
+                
+                setTimeout(() => { 
+                    splash.style.visibility = 'hidden'; 
+                    splash.style.display = 'none'; 
+                }, 600);
             }
         }
 
