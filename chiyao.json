@@ -62,5 +62,13 @@
     "taken_pm": true,
     "time_pm": "22:50",
     "water_count": 3
+  },
+  {
+    "date": "2026-01-25",
+    "taken_am": true,
+    "time_am": "09:14",
+    "taken_pm": false,
+    "time_pm": "",
+    "water_count": 0
   }
 ]
