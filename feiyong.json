@@ -2,16 +2,16 @@
   {
     "id": "1769070249105",
     "date": "2026-01-22",
-    "total": 300,
+    "total": 7950,
     "items": {
-      "jiancha": 100,
-      "yaowu": 100,
-      "jiaotong": 100
+      "jiancha": 0,
+      "yaowu": 7950,
+      "jiaotong": 0
     },
     "payment": {
-      "yibao": 100,
-      "shangbao": 100,
-      "geren": 100
+      "yibao": 4794,
+      "shangbao": 0,
+      "geren": 2256
     }
   }
 ]
