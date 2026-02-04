@@ -133,5 +133,13 @@
     "taken_pm": true,
     "time_pm": "22:32",
     "water_count": 1
+  },
+  {
+    "date": "2026-02-04",
+    "taken_am": true,
+    "time_am": "10:52",
+    "taken_pm": false,
+    "time_pm": "",
+    "water_count": 0
   }
 ]
