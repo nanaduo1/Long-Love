@@ -55,5 +55,11 @@
     "wbc": 6.96,
     "plt": 275,
     "bcr_abl": null
+  },
+  {
+    "date": "2026-07-24",
+    "wbc": null,
+    "plt": null,
+    "bcr_abl": 0.0569
   }
 ]
